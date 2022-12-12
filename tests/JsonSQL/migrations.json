@@ -1,0 +1,28 @@
+{
+	"tableName"  : "migrations",
+    "primaryKey" : "id",
+    "fields" : [
+                {
+                    "fieldName" : "id",
+                    "fieldType" : "LONG"
+                },
+                {
+                    "fieldName" : "migration",
+                    "fieldType" : "STRING"
+                },
+                {
+                    "fieldName" : "batch",
+                    "fieldType" : "LONG"
+                },
+                {
+                    "fieldName" : "description",
+                    "fieldType" : "ENCRYPTED"
+                },
+                {
+                    "fieldName" : "name",
+                    "fieldType" : "ENCRYPTED_INDEXED",
+					"EI_MinTokenLen" : 3
+                }
+            ],
+    "indexes" : []
+}

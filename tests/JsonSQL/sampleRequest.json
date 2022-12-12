@@ -1,0 +1,86 @@
+{
+	"action" : "SELECT",
+    "tables" : [
+            {
+                "tableName" : "migrations",
+                "tableAlias" : "migrations"
+            },
+            {
+                "tableName" : "ldapuser",
+                "tableAlias" : "ldapuser"
+            }
+          ],
+        
+          "fields" : [
+            {  "fieldName": "migrations.id"   },
+            {  "fieldName": "migrations.migration"   },
+            {  "fieldName": "ldapuser.id"   },
+            {  "fieldName": "ldapuser.givenname"   },
+            {  "fieldName": "ldapuser.surname"   },
+            {  "fieldName": "ldapuser.uuid"   }
+          ],
+
+          "join" : [
+            {
+                "joinTable" : "ldapuser",
+                "onJoinSource": "migrations.id",
+                "onJoinDest": "ldapuser.id"
+            }
+
+          ],
+        
+          "where" : [
+            
+            {
+                "operator" : "OR",
+                "clauses" : [
+                    {
+                        "fieldName" : "migrations.migration",
+                        "operator" : "=",
+                        "value" : "MARIO1"
+                    },
+
+                    {
+                        "operator" : "AND",
+                        "clauses" : [
+                            {
+                                "fieldName" : "ldapuser.givenname",
+                                "operator" : "LIKE",
+                                "value" : "%MA%"
+                            },
+
+                            {
+                                "fieldName" : "ldapuser.surname",
+                                "operator" : "=",
+                                "value" : "TEST"
+                            }
+                        ]
+
+                    },
+
+                    {
+                        "fieldName" : "ldapuser.uuid",
+                        "operator" : ">",
+                        "value" : "9304909"
+                    }
+
+                ]
+            }
+
+          ],
+        
+          "order" : [
+
+			{
+                "sortOrder" : "DESC",
+				"fields" : [
+					{  "fieldName": "migrations.id"   },
+					{  "fieldName": "ldapuser.uuid"   }
+				]
+            }
+
+
+		  ],
+        
+          "limit" : []
+        }

@@ -1,0 +1,23 @@
+{
+	"action"    : "INSERT",
+	"tables" : [
+            {
+                "tableName" : "migrations",
+                "tableAlias" : "migrations"
+            }
+          ],
+    "data" : [
+            {  
+				"fieldName": "migrations.migration",   
+				"fieldValue" : "Migrazione 100 update"
+			},
+            {  
+				"fieldName": "migrations.batch",   
+				"fieldValue" : 22
+			},
+            {  
+				"fieldName": "migrations.name",   
+				"fieldValue" : "Migra 999 update"
+			}
+	]          
+}

@@ -1,0 +1,23 @@
+{
+            "tableName"  : "ldapuser",
+            "primaryKey" : "id",
+            "fields" : [
+                {
+                    "fieldName" : "id",
+                    "fieldType" : "LONG"
+                },
+                {
+                    "fieldName" : "givenname",
+                    "fieldType" : "ENCRYPTED_INDEXED"
+                },
+                {
+                    "fieldName" : "surname",
+                    "fieldType" : "ENCRYPTED"
+                },
+                {
+                    "fieldName" : "uuid",
+                    "fieldType" : "STRING"
+                }
+            ],
+            "indexes" : []
+        }
