@@ -1,0 +1,39 @@
+{
+
+
+	"autoload": {
+        "psr-4": {
+            "Paulodiff\\FieldsEncryptedIndex\\": "src"
+        }
+    },
+    
+	"autoload-dev": {
+        "psr-4": {
+            "Paulodiff\\FieldsEncryptedIndex\\Tests\\": "tests",
+            "Paulodiff\\FieldsEncryptedIndex\\": "src"
+        }
+    }, 
+
+
+
+
+
+    "require": {
+        "illuminate/support": "^9.41"
+    },
+	
+	
+    "require-dev": {
+        "orchestra/testbench": "^7.14",
+		"squizlabs/php_codesniffer": "^3.7"
+    },
+	
+	
+	"extra": {
+        "laravel": {
+            "providers": [
+                "Paulodiff\\FieldsEncryptedIndex\\FieldsEncryptedIndexServiceProvider"
+            ]
+        }
+    }
+}
