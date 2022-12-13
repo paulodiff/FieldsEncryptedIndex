@@ -1,35 +1,176 @@
 <?php
 namespace Paulodiff\FieldsEncryptedIndex\Console;
 
-//.\vendor\bin\phpunit --filter the_db_seed_command tests\Unit\DbSeedCommandTest.php
+// Test FieldsEncryptedIndex ...
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 
-use DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Hash;
 use Faker\Factory as Faker;
 
-use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter;
-use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexService;
-use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexTrait;
+use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine;
 
-use Paulodiff\FieldsEncryptedIndex\Tests\Models\Author;
-use Paulodiff\FieldsEncryptedIndex\Tests\Models\Post;
 
-class FieldsEncryptedIndexDbSeedCommand extends Command
+class FieldsEncryptedIndexTestCommand extends Command
 {
-    protected $signature = 'FieldsEncryptedIndex:dbSeed {numOfrows}';
+    protected $signature = 'FieldsEncryptedIndex:test {action} {rows}';
 
-    protected $description = 'CheckConfig for FieldsEncryptedIndex';
+    protected $description = 'dbSeed with FieldsEncryptedIndexEngine';
+	public $FEI_engine;
 
     public function handle()
     {
-        $this->info('FieldsEncryptedIndex DbSeed - CREATE TABLE ');
+        
+
+		$action = $this->argument('action');
+		$rows = $this->argument('rows');
+		
+
+		Log::channel('stderr')->notice('FieldsEncryptedIndex:test:', [$action, $rows] );
+		
+
+		if ($action == "insertMigrations") 
+		{
+
+
+			for($i = 0; $i<$rows; $i++)
+			{
+
+
+				// create JSON request
+				$faker = Faker::create('SeedData');
+				$rNumber = $faker->randomNumber(5, true);
+				$rMigrationName = $faker->name();
+				$rSentence = $faker->sentence();
+				$rName = $faker->words(3, true);
+				$rSurname = $faker->words(3, true);
+
+
+				$jsonRequest = '{
+					"action"    : "INSERT",
+					"tables" : [
+							{
+								"tableName" : "migrations",
+								"tableAlias" : "migrations"
+							}
+						],
+					"data" : [
+							{  
+								"fieldName": "migrations.migration",   
+								"fieldValue" : "' . $rMigrationName . '"
+							},
+							{  
+								"fieldName": "migrations.batch",   
+								"fieldValue" : ' . $rNumber . '
+							},
+							{  
+								"fieldName": "migrations.description",   
+								"fieldValue" : "' . $rSentence . '"
+							},
+							{  
+								"fieldName": "migrations.description_plain",   
+								"fieldValue" : "' . $rSentence . '"
+							},
+							{  
+								"fieldName": "migrations.name",   
+								"fieldValue" : "' . $rName . '"
+							},
+							{  
+								"fieldName": "migrations.name_plain",   
+								"fieldValue" : "' . $rName . '"
+							},
+							{  
+								"fieldName": "migrations.surname",   
+								"fieldValue" : "' . $rSurname . '"
+							},
+							{  
+								"fieldName": "migrations.surname_plain",   
+								"fieldValue" : "' . $rSurname . '"
+							}
+
+					]          
+				}';
+
+
+				Log::channel('stderr')->notice('FieldsEncryptedIndex:' . $action, [$i, $jsonRequest] );
+				
+				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+				$q = $this->FEI_engine->process($jsonRequest);
+				Log::channel('stderr')->info('parseSQL:FINAL!:', [$q] );
+
+			}
+
+		} elseif ( $action == "selectMigrations" ) {
+
+			for($i = 0; $i<$rows; $i++)
+			{
+
+
+				// create JSON request
+				$faker = Faker::create('SeedData');
+				$rNumber = $faker->randomNumber(5, true);
+				$rMigrationName = $faker->name();
+				$rSentence = $faker->sentence();
+				$rName = $faker->words(3, true);
+				$rSurname = $faker->words(3, true);
+
+
+				$jsonRequest = '{
+					"action" : "SELECT",
+					"tables" : [
+							{
+								"tableName" : "migrations",
+								"tableAlias" : "migrations"
+							}
+						  ],
+						
+					"fields" : [
+							{  "fieldName": "migrations.id"   },
+							{  "fieldName": "migrations.migration"   },
+							{  "fieldName": "migrations.description"   }
+							
+					],
+
+					"where" : [
+            
+						{
+							"operator" : "",
+							"clauses" : [
+								{
+									"fieldName" : "migrations.id",
+									"operator" : "<",
+									"value" : 3
+								}
+							]
+						}
+					]
+					
+			
+
+						}';
+
+				Log::channel('stderr')->notice('FieldsEncryptedIndex:' . $action, [$i, $jsonRequest] );
+				
+				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+				$q = $this->FEI_engine->process($jsonRequest);
+				Log::channel('stderr')->notice('FieldsEncryptedIndex:' . $action, [$q] );
+
+		
+			} 
+		} else {
+			Log::channel('stderr')->notice('FieldsEncryptedIndex:test: action not found!', [$action] );
+		}
+
+
+		Log::channel('stderr')->notice('FieldsEncryptedIndex:test!:', ['-------------- END! -------------------------'] );
+
+		// send JSON request
+
+
+		/*
 
         Log::channel('stderr')->info('CheckConfig:', ['Creating table authors ...'] );
         if ( !Schema::hasTable('authors'))
@@ -79,16 +220,6 @@ class FieldsEncryptedIndexDbSeedCommand extends Command
             $a = new \App\Models\Author();
         }
 
-/*
-        try
-        {
-            $a = new \Paulodiff\FieldsEncryptedIndex\Tests\Models\Author();
-        }
-        catch (\Exception $e)
-        {
-            $a = new \App\Models\Author();
-        }
-*/
 
         Log::channel('stderr')->info('SeedData:', ['destroy authors rainbox index... ']);
         $a::destroyRainbowIndex();
@@ -136,22 +267,18 @@ class FieldsEncryptedIndexDbSeedCommand extends Command
             $p->save();
 
             Log::channel('stderr')->info('SeedData:' . $i . '#' . $numOfAuthors .']Author Added!:', [$p->toArray()]);
-            /*
-            // Adding Posts
-            for($j=0;$j<$numOfPosts;$j++)
-            {
-              $q = new Post();
-              $q->title = strtoupper($faker->name());
-              $q->title_enc = $q->title;
-              $q->author_id = $p->id;
-              $q->save();
-              Log::channel('stderr')->info('SeedData:' . $j . '#' . $numOfPosts .']Post Added!:', [$q->toArray()]);
-            }
-            */
             
+
+
         }
 
+		*/
+
+
         Log::channel('stderr')->info('SeedData finished!:', []);
+
+
+
         
     }
 

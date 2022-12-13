@@ -66,8 +66,6 @@ class FieldsEncryptedIndexQueryBuilder {
 		if ($verbClause === "SELECT")
 		{
 
-
-
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### 1 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$fromTableClause = $this->buildFromTableClause($sqlRequest, " FROM "); 
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### FROM TABLE SQL-> ##', [$fromTableClause] );
@@ -77,18 +75,26 @@ class FieldsEncryptedIndexQueryBuilder {
 
 			$fieldsClause = $this->buildFieldsClause($sqlRequest); 
 
+			$Response['fiels2decrypt'] = $fieldsClause['fiels2decrypt'];
+
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### FIELDS SQL ####', [$fieldsClause] );
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### WHERE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 
-			try
+			if ( array_key_exists('where', $sqlRequest) ) 
 			{
-				$whereClause = $this->buildWhereClause($sqlRequest['where'][0]);
-				Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### WHERE COND SQL-> ##', [$whereClause] );
+				try
+				{
+					Log::channel('stderr')->info('where clause:', [$sqlRequest] );
+					Log::channel('stderr')->info('where clause:', [$sqlRequest['where'][0]] );
+					$whereClause = " WHERE " . $this->buildWhereClause($sqlRequest['where'][0]);
+					Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### WHERE COND SQL-> ##', [$whereClause] );
 
-			} 
-			catch (FieldsEncryptedIndexException $e) {
-				Log::channel('stderr')->error('FieldsEncryptedIndexQueryBuilder:Exception:', [$e->getMessage()] );
-				die();
+				} catch (FieldsEncryptedIndexException $e) {
+					Log::channel('stderr')->error('FieldsEncryptedIndexQueryBuilder:Exception:', [$e->getMessage()] );
+					die();
+				}
+			} else {
+				$whereClause = "";
 			}
 
 	
@@ -100,6 +106,9 @@ class FieldsEncryptedIndexQueryBuilder {
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### ORDER ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$orderClause = $this->buildOrderClause($sqlRequest); 
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryBuilder:### ORDER SQL-> ##', [$orderClause] );
+
+
+			// LIMIT TODO TODO TODO 
 
 			$sqlStatement = $verbClause . " " . $fieldsClause['SQL'] . " " . $fromTableClause . " " . $joinClause . " " . $whereClause . " " . $orderClause;
 
@@ -183,6 +192,7 @@ class FieldsEncryptedIndexQueryBuilder {
                 Log::channel('stderr')->debug('buildFromTableClause:tname:', [$item] );
                 
 				// $tc  = $this->getTableConfig($item['tableName']);
+				// solo per verificare l'esistenza della configurazione della tabella
 				$tc  = $this->FEI_config->getTableConfig($item['tableName']);
                 
 				if ( $SQL == "") 
@@ -194,7 +204,6 @@ class FieldsEncryptedIndexQueryBuilder {
 					$SQL = $SQL . " , " . $item['tableName'];
 				}
 			
-
             }
 
         }
@@ -239,7 +248,7 @@ class FieldsEncryptedIndexQueryBuilder {
 				{
 					$encryptedSelectFields[] = [
 						"tableName" => $tname,
-						"fiedlName" => $fname,
+						"fieldName" => $fname,
 						"fieldType" => $fiedlType
 					];
 				}
@@ -270,6 +279,8 @@ class FieldsEncryptedIndexQueryBuilder {
 	function buildJoinClause(array $r) {
 
 		Log::channel('stderr')->debug('buildJoinClause: TODO MULTIPLE JOIN:', [$r] );
+
+		if (!array_key_exists('join', $r)) return "";
 
 		if (count($r['join']) > 1 )
 		{
@@ -329,10 +340,13 @@ class FieldsEncryptedIndexQueryBuilder {
 	function buildOrderClause(array $r) {
 
 
+		if (!array_key_exists('order', $r)) return "";
+
 		Log::channel('stderr')->info('buildOrderClause: joinTable:', [is_array($r)] );
 		Log::channel('stderr')->info('buildOrderClause: joinTable:', [array_key_exists('order', $r)] );
 		Log::channel('stderr')->info('buildOrderClause: joinTable:', [array_key_exists('sortOrder', $r['order'][0])] );
 		Log::channel('stderr')->info('buildOrderClause: joinTable:', [array_key_exists('fields', $r['order'][0])] );
+
 
 		if (    is_array($r) 
 				&& array_key_exists('order', $r) 
@@ -523,6 +537,7 @@ class FieldsEncryptedIndexQueryBuilder {
 		{
 			$INSERT_CLAUSE_UP = "";
 			$INSERT_CLAUSE_DN = "";
+			$EncrypedIndexedFiels2Update = [];
 
 			// $sortOrder = $r['order'][0]['sortOrder'];
 			Log::channel('stderr')->info('buildInsertClause:', [$r['data']] );
@@ -532,6 +547,9 @@ class FieldsEncryptedIndexQueryBuilder {
 			//	Log::channel('stderr')->error('buildOrderClause: sort not valid!:', [$sortOrder] );
 			//	die();
 			//}
+
+			$tableName = $this->buildFromTableClause($r, ''); // get table name from request
+
 
 			foreach ($r['data'] as $index => $item) 
             {
@@ -544,8 +562,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 				Log::channel('stderr')->info('buildInsertClause: fieldType to check:', [$ft] );
 
-				$EncrypedIndexedFiels2Update = [];
-
+				
 				// ($INSERT_CLAUSE_UP === "") ? "pass" : "Fail";
 
 				$INSERT_CLAUSE_UP = ($INSERT_CLAUSE_UP === "") ? $item['fieldName'] : $INSERT_CLAUSE_UP . "," . $item['fieldName'] ;
@@ -562,13 +579,16 @@ class FieldsEncryptedIndexQueryBuilder {
 				elseif (in_array($ft, ["ENCRYPTED"]))
 				{
 					$value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+					
 					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $value . "'": $INSERT_CLAUSE_DN . ",'" . $value . "'";
 				}
 				elseif (in_array($ft, ["ENCRYPTED_INDEXED"]))
 				{
 					$value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+
 					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $value . "'" : $INSERT_CLAUSE_DN . ",'" . $value ."'";
 					$EncrypedIndexedFiels2Update[] = [
+						"tableName" => $tableName,
 						"fieldName" => $item['fieldName'],
 						"fieldValue" => $item['fieldValue'],
 					];
@@ -582,10 +602,14 @@ class FieldsEncryptedIndexQueryBuilder {
 				
 			}
 
-			return array(
+			$r = [
 				"SQL" =>  " ( " . $INSERT_CLAUSE_UP . " ) VALUES ( " . $INSERT_CLAUSE_DN . " ) ",
 				"EncrypedIndexedFiels2Update" => $EncrypedIndexedFiels2Update
-			);
+			];
+
+			Log::channel('stderr')->info('buildInsertClause: !RETURN!:', [$r] );
+
+			return $r;
 
 		}
 		else

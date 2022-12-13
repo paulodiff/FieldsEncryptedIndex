@@ -23,8 +23,8 @@ class TestCase extends \Orchestra\Testbench\TestCase
     // perform environment setup
     $app['config']->set('FieldsEncryptedIndex.key','DjDLn1H7V1zWDQA7oJ+LMqJ+LQguZgGMO8v/wNei5zs=');
     $app['config']->set('FieldsEncryptedIndex.nonce','cxM2LpMbuIRwn4pP8IQbym7pyM25lQSw');
-    $app['config']->set('FieldsEncryptedIndex.encrypt',true);
-    $app['config']->set('FieldsEncryptedIndex.prefix','urti_');
+    $app['config']->set('FieldsEncryptedIndex.encrypt',false); // !!! ONLY TEST !!!!
+    $app['config']->set('FieldsEncryptedIndex.prefix','FEI');
 
 
 	$app['config']->set('FieldsEncryptedIndex.configFolder','d:/PROGETTI/LARAVEL/FieldsEncryptedIndex/tests/JsonSQL/');

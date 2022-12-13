@@ -146,11 +146,13 @@ class FieldsEncryptedIndexService
     }
     */
 
+	/*
     public function setRT($tag, $s, $index)
     {
       Log::channel('stderr')->debug('FieldsEncryptedIndexService!setRT*!:', [$tag, $s, $index] );
       return $this->setToStorage($tag, $s, $index);
     }
+	*/
 
     // Ritorna l'array degli id relativi ad un determinato tag
     /*
@@ -324,32 +326,34 @@ class FieldsEncryptedIndexService
 
     function setupStorage($tag)
     {
-      $tname = $this->slugify($tag);
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tname] );
-    
-      if (config('FieldsEncryptedIndex.encrypt'))
-      {
-        $tname = FieldsEncryptedIndexEncrypter::hash_md5($tname);
-      }
 
+		if (config('FieldsEncryptedIndex.prefix'))
+		{
+			$prefix = config('FieldsEncryptedIndex.prefix');
+		}
+		else 
+		{
+			die('FieldsEncryptedIndexService:setupStorage prefix not set!');
+		}
 
-      if (config('FieldsEncryptedIndex.prefix'))
-      {
-        $prefix = config('FieldsEncryptedIndex.prefix');
-      }
-      else 
-      {
-        die('FieldsEncryptedIndexService:setupStorage prefix not set!');
-      }
+		$tname = $this->slugify($prefix . "-" . $tag);
 
-      $tname = $prefix . $tname;
+		Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tname] );
+		
+		if (config('FieldsEncryptedIndex.encrypt'))
+		{
+			$tname = FieldsEncryptedIndexEncrypter::hash_md5($tname);
+		}
+
+      
 
       Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tname] );
 
       if ( !Schema::hasTable($tname)) {
         Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!CREATE TABLE', [$tname] );
 
-        Schema::create($tname, function(Blueprint $table)
+        
+		Schema::create($tname, function(Blueprint $table)
         {
             // $table->increments('id');
             // $table->string('rt_tag');
@@ -358,6 +362,7 @@ class FieldsEncryptedIndexService
             // $table->unique(['rt_tag','rt_key','rt_value']);
             // $table->index(['rt_tag','rt_value']);
         });
+
       }
       return $tname;
 
@@ -377,22 +382,24 @@ class FieldsEncryptedIndexService
 
 
 	// Salva i valori dell'indice ...
-	function FEI_set($tableName, $fieldName, $fieldValue)
+	function FEI_set($tableName, $fieldName, $fieldValue, $value)
 	{
-		Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tableName, $fieldName, $fieldValue] );
+		Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tableName, $fieldName, $fieldValue, $value] );
 
 
 		// $data = self::rtiSanitize($fValue, $fSafeChars, $fTransform);
 
 		// Tokenize ... su
-		$keyList = $this->feiTokenize($data, $fMinTokenLen);
+		// $keyList = $this->feiTokenize($fieldValue, $fMinTokenLen);
+		$keyList = $this->feiTokenize($fieldValue, 3);
 
 		$tag = $tableName . ":" . $fieldName;
 
 		foreach( $keyList as $tokenValue )
 		{
 
-			$this->setRT($tag, $tokenValue, $fieldValue);
+			// $this->setRT($tag, $tokenValue, $value);
+			$this->setToStorage($tag, $tokenValue, $value);
 		    // $rtService->setRT($item['tag'],$item['key'],$item['value']);
 		}
 
@@ -467,7 +474,8 @@ class FieldsEncryptedIndexService
 	  $tokens = $this->rolling_window_string($s, $minTokenLen);
 
 	
-	  dd($tokens);
+	  return $tokens;
+	  
 
 
 	  // per ogni token rimuove gli spazi

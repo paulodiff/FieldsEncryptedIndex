@@ -3,7 +3,7 @@ namespace Paulodiff\FieldsEncryptedIndex;
 
 use Illuminate\Support\ServiceProvider;
 use Paulodiff\FieldsEncryptedIndex\Console\FieldsEncryptedIndexCheckConfigCommand;
-use Paulodiff\FieldsEncryptedIndex\Console\FieldsEncryptedIndexDbSeedCommand;
+use Paulodiff\FieldsEncryptedIndex\Console\FieldsEncryptedIndexTestCommand;
 use Paulodiff\FieldsEncryptedIndex\Console\FieldsEncryptedIndexDbDynamicCommand;
 use Paulodiff\FieldsEncryptedIndex\Console\FieldsEncryptedIndexParseSQLCommand;
 // use Paulodiff\FieldsEncryptedIndex\Console\FieldsEncryptedIndexKeyGeneratorCommand;
@@ -37,7 +37,7 @@ class FieldsEncryptedIndexServiceProvider extends ServiceProvider
             if ($this->app->runningInConsole()) {
                 $this->commands([
                     // FieldsEncryptedIndexCheckConfigCommand::class,
-                    // FieldsEncryptedIndexDbSeedCommand::class,
+                    FieldsEncryptedIndexTestCommand::class,
                     // FieldsEncryptedIndexDbDynamicCommand::class,
                     FieldsEncryptedIndexParseSQLCommand::class,
                     // FieldsEncryptedIndexKeyGeneratorCommand::class,

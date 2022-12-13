@@ -154,6 +154,7 @@ class FieldsEncryptedIndexConfig {
 			$Validator = Validator::make($tableArrayConfig, $this->tableRules);
 			if ($Validator->fails()) {
 				Log::channel('stderr')->error('Table config check error!', [$Validator->errors()] );
+				die();
 			}
 			return $tableArrayConfig;
 		}
@@ -268,15 +269,20 @@ class FieldsEncryptedIndexConfig {
 		}
 	}
 
+	public function retunArrayFromJson($j)
+	{
+		
+		$tableArrayConfig = json_decode($j, true);
 
+		if( is_null($tableArrayConfig)) 
+		{
+			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:retunArrayFromJson ERROR - !', [ $j] );    
+			throw new FieldsEncryptedIndexException('FieldsEncryptedIndexConfig:retunArrayFromJson JSON parse error');
+		}
 
+		return $tableArrayConfig;
 
-
-
-
-
-
-
+	}
 
 
 

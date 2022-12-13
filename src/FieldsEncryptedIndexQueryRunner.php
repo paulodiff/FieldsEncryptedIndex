@@ -68,9 +68,62 @@ class FieldsEncryptedIndexQueryRunner {
 
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:SELECT', [$q] );
 
-			$users = DB::select('select * from users where active = ?', [1]);
- 
-       
+			$sqlStatement = $q['sqlStatement'];
+
+			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:EXEC', [$sqlStatement] );
+
+			// $results = DB::select( DB::raw("SELECT * FROM some_table WHERE some_col = :somevariable"), array(  'somevariable' => $someVariable,
+
+			$rs = DB::select( DB::raw($sqlStatement) );
+	
+			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:DATA', [$rs] );
+
+			foreach($rs as $item) 
+			{
+				// Log::channel('stderr')->info('-', [$item] );
+				Log::channel('stderr')->info('-', [$item->id, $item->migration] );
+			}
+			
+			if ( array_key_exists('fiels2decrypt', $q) ) 
+			{
+
+				$toDecrypt = $q['fiels2decrypt'];
+
+				foreach($rs as $item) 
+				{
+					// Log::channel('stderr')->info('-', [$item] );
+					Log::channel('stderr')->info('-', [$item] );
+
+					foreach( $toDecrypt as $fn)
+					{
+
+						Log::channel('stderr')->info(' ### ', [$fn] );
+						Log::channel('stderr')->info(' ### ', [$fn['fieldName']] );
+						// $object->{'$t'};
+						$v = $item->{$fn['fieldName']};
+						Log::channel('stderr')->info(' ### ', [$v] );
+						$v2 = FieldsEncryptedIndexEncrypter::decrypt($v);
+						Log::channel('stderr')->info(' ### ', [$v2] );
+
+
+					}
+
+				}
+
+
+			}  
+
+
+
+			// decode encrypted
+
+		
+
+			// order values if encrypted
+
+			// limit
+
+			return $rs;
 
 		}
 
@@ -88,24 +141,39 @@ class FieldsEncryptedIndexQueryRunner {
 			// Last Inserted Ids ...
 			// https://www.larashout.com/laravel-8-get-last-id-of-an-inserted-model
 
+			$lastInsertId = DB::getPdo()->lastInsertId();
 
+			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:ID', [$lastInsertId] );
 
 			// INSERIMENTO DI TUTTE LE CHIAVI SUL DATABASE
-			/*
+			
+
+			// CHECK ID Long and > 0
+
+			$this->checkLastInsertedId($lastInsertId);
 
 
-			$EncrypedIndexedFiels2Update = $q['EncrypedIndexedFiels2Update'];
-
-
-
-			foreach ($EncrypedIndexedFiels2Update  as $item ) 
+			if (array_key_exists('EncrypedIndexedFiels2Update', $q))
 			{
 
-				Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:UPDATE INDEX ', [$item] );
-				$this->FEI_service->FEI_SET($item['tableName'], $item['fieldName'],  $item['fieldValue']);
+				Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:UPDATE INDEK KEYS ', [] );
+				
+				$EncrypedIndexedFiels2Update = $q['EncrypedIndexedFiels2Update'];
+
+				foreach ($EncrypedIndexedFiels2Update  as $item ) 
+				{
+	
+					Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:UPDATE INDEX ', [$item] );
+					$this->FEI_service->FEI_SET($item['tableName'], $item['fieldName'],  $item['fieldValue'], $lastInsertId);
+	
+				}
+				
+
 
 			}
-			*/
+
+
+			
 
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:INSERT', ['---OK---'] );
 
@@ -219,6 +287,18 @@ class FieldsEncryptedIndexQueryRunner {
 		
 		return $Response;
 	}
+
+	function checkLastInsertedId($v) 
+	{
+		if (is_numeric($v) && $v > 0) 
+		{
+			return true;
+		} else {
+			throw new FieldsEncryptedIndexException('FieldsEncryptedIndexQueryRunner:LastInsertedId NOT FOUND');
+		}
+
+	}
+
 
 	function buildVerbClause(array $r) {
 
