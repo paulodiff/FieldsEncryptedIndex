@@ -105,6 +105,7 @@ class FieldsEncryptedIndexQueryRunner {
 						$v2 = FieldsEncryptedIndexEncrypter::decrypt($v);
 						Log::channel('stderr')->info(' ### ', [$v2] );
 
+						$item->{$fn['fieldName']} = $v2;
 
 					}
 

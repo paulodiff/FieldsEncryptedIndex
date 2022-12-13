@@ -130,7 +130,9 @@ class FieldsEncryptedIndexTestCommand extends Command
 					"fields" : [
 							{  "fieldName": "migrations.id"   },
 							{  "fieldName": "migrations.migration"   },
-							{  "fieldName": "migrations.description"   }
+							{  "fieldName": "migrations.description"   },
+							{  "fieldName": "migrations.description_plain"   },
+							{  "fieldName": "migrations.name"   }
 							
 					],
 
@@ -157,6 +159,20 @@ class FieldsEncryptedIndexTestCommand extends Command
 				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
 				$q = $this->FEI_engine->process($jsonRequest);
 				Log::channel('stderr')->notice('FieldsEncryptedIndex:' . $action, [$q] );
+				Log::channel('stderr')->notice('------------------------------------------------------------------------------------------------------------------', [] );
+
+				foreach($q as $item) 
+				{
+					// Log::channel('stderr')->notice( '#', [$item] );
+					$displayRow = "";
+					foreach ($item as $key => $value) {
+						// echo "$key => $value\n";
+						$displayRow = $displayRow . "|" . $value;
+					}
+					Log::channel('stderr')->notice( $displayRow );
+
+				}
+
 
 		
 			} 
@@ -275,7 +291,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 		*/
 
 
-        Log::channel('stderr')->info('SeedData finished!:', []);
+        Log::channel('stderr')->info('TEST finished!:', []);
 
 
 
