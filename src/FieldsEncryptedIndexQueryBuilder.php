@@ -413,7 +413,7 @@ class FieldsEncryptedIndexQueryBuilder {
         // $branch = array();
     
         // echo "\nSTART buildTree----------------------- \n";
-		Log::channel('stderr')->info('buildWhereClause: joinTable:', ['START'] );
+		Log::channel('stderr')->info('buildWhereClause:', ['START'] );
         // print_r($elements);
         // print_r($elements['operator']);
         // print_r($elements['clauses']);
@@ -474,9 +474,13 @@ class FieldsEncryptedIndexQueryBuilder {
         $ft = $this->FEI_config->getFieldTypeDefinition($o['fieldName']);
         Log::channel('stderr')->debug('getFieldClause:', [$o, $ft] );
 
-        if (in_array($ft, ["LONG", "STRING"])) 
+        if (in_array($ft, ["LONG"])) 
         {
             return  " " . $o['fieldName'] . " " . $o['operator'] . " " . $o['value'] . " ";
+        } 
+		elseif (in_array($ft, ["STRING"])) 
+        {
+            return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['value'] . "' ";
         } 
         elseif (in_array($ft, ["ENCRYPTED"]))
         {
@@ -487,9 +491,14 @@ class FieldsEncryptedIndexQueryBuilder {
 			}
 			else 
 			{
+				Log::channel('stderr')->debug('[getFieldClause:', [$o['value']] );
+				Log::channel('stderr')->debug('[getFieldClause:', [FieldsEncryptedIndexEncrypter::encrypt($o['value'])] );
+				Log::channel('stderr')->debug('[getFieldClause:', [FieldsEncryptedIndexEncrypter::encrypt($o['value'])] );
 				$value = FieldsEncryptedIndexEncrypter::encrypt($o['value']);
+				Log::channel('stderr')->debug('[getFieldClause:', [$value]);
+								
 
-				return  " " . $o['fieldName'] . " " . $o['operator'] . $value . " ";
+				return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $value . "' ";
 			}
             
         }
@@ -509,7 +518,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 				Log::channel('stderr')->debug('getFieldClause:FEI_service', [$r] );
 
-				return  " { " . $o['fieldName'] . " !-ENC_INDEX-! IN VALUES (AAAAA,BBBBB) } ";
+				return  " { " . $o['fieldName'] . " TODO_TODO_TODO_!-ENC_INDEX-! IN VALUES (AAAAA,BBBBB) } ";
 			}
            
         }
@@ -578,7 +587,15 @@ class FieldsEncryptedIndexQueryBuilder {
 				} 
 				elseif (in_array($ft, ["ENCRYPTED"]))
 				{
-					$value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+
+					$plainValue = $item['fieldValue'];
+
+					Log::channel('stderr')->info('buildInsertClause: ENCRYPTED:', [ $plainValue ] );
+					
+					$value = FieldsEncryptedIndexEncrypter::encrypt( $plainValue );
+
+					Log::channel('stderr')->info('buildInsertClause: ENCRYPTED:', [$value] );
+					Log::channel('stderr')->info('buildInsertClause: ENCRYPTED:', [FieldsEncryptedIndexEncrypter::encrypt( $plainValue )] );
 					
 					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $value . "'": $INSERT_CLAUSE_DN . ",'" . $value . "'";
 				}

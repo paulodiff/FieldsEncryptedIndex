@@ -23,6 +23,9 @@ use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexService;
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexConfig;
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexException;
 
+use function PHPUnit\Framework\isEmpty;
+use function PHPUnit\Framework\isNull;
+
 class FieldsEncryptedIndexQueryRunner {
 
     protected $model;
@@ -70,7 +73,9 @@ class FieldsEncryptedIndexQueryRunner {
 
 			$sqlStatement = $q['sqlStatement'];
 
+			Log::channel('stderr')->info('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@', [] );
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:EXEC', [$sqlStatement] );
+			Log::channel('stderr')->info('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@', [] );
 
 			// $results = DB::select( DB::raw("SELECT * FROM some_table WHERE some_col = :somevariable"), array(  'somevariable' => $someVariable,
 
@@ -78,16 +83,22 @@ class FieldsEncryptedIndexQueryRunner {
 	
 			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:DATA', [$rs] );
 
+			/*
 			foreach($rs as $item) 
 			{
 				// Log::channel('stderr')->info('-', [$item] );
 				Log::channel('stderr')->info('-', [$item->id, $item->migration] );
 			}
+			*/
+
+			// se vi sono dati da decifrare
 			
 			if ( array_key_exists('fiels2decrypt', $q) ) 
 			{
-
+				
 				$toDecrypt = $q['fiels2decrypt'];
+
+				Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:TO_DECRYPT', [$toDecrypt] );
 
 				foreach($rs as $item) 
 				{
@@ -97,15 +108,37 @@ class FieldsEncryptedIndexQueryRunner {
 					foreach( $toDecrypt as $fn)
 					{
 
-						Log::channel('stderr')->info(' ### ', [$fn] );
-						Log::channel('stderr')->info(' ### ', [$fn['fieldName']] );
+						// Log::channel('stderr')->info(' ### ', [$fn] );
+						// Log::channel('stderr')->info(' ### ', [$fn['fieldName']] );
 						// $object->{'$t'};
-						$v = $item->{$fn['fieldName']};
-						Log::channel('stderr')->info(' ### ', [$v] );
-						$v2 = FieldsEncryptedIndexEncrypter::decrypt($v);
-						Log::channel('stderr')->info(' ### ', [$v2] );
 
-						$item->{$fn['fieldName']} = $v2;
+						$v = $item->{$fn['fieldName']};
+						Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-U-@', [$v] );
+
+						if(is_null($v)) {
+							Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-D1@', [$v] );
+						} else {
+							$v2 = FieldsEncryptedIndexEncrypter::decrypt($v);	
+							$item->{$fn['fieldName']} = $v2;
+							Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-D2@', [$v2] );
+						}
+
+						
+
+						/*
+						if(isNull($v) || isEmpty($v)) {
+
+						} else {
+							$v2 = FieldsEncryptedIndexEncrypter::decrypt($v);	
+							$item->{$fn['fieldName']} = $v2;
+						}
+						*/
+
+						// Log::channel('stderr')->info(' ### ', [$v] );
+						// $v2 = FieldsEncryptedIndexEncrypter::decrypt($v);
+						// Log::channel('stderr')->info(' ### ', [$v2] );
+
+						// $item->{$fn['fieldName']} = $v2;
 
 					}
 
@@ -115,12 +148,13 @@ class FieldsEncryptedIndexQueryRunner {
 			}  
 
 
-
-			// decode encrypted
-
+			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:TO_ORDER', [$toDecrypt] );
 		
 
 			// order values if encrypted
+
+
+			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:TO_LIMIT', [$toDecrypt] );
 
 			// limit
 

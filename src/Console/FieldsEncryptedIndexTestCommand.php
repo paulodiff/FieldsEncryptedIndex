@@ -12,6 +12,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Faker\Factory as Faker;
 
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine;
+use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter;
 
 
 class FieldsEncryptedIndexTestCommand extends Command
@@ -44,7 +45,8 @@ class FieldsEncryptedIndexTestCommand extends Command
 				$faker = Faker::create('SeedData');
 				$rNumber = $faker->randomNumber(5, true);
 				$rMigrationName = $faker->name();
-				$rSentence = $faker->sentence();
+				// $rSentence = $faker->sentence();
+				$rSentence = 'A eveniet suscipit molestiae minus sit tenetur.';
 				$rName = $faker->words(3, true);
 				$rSurname = $faker->words(3, true);
 
@@ -73,7 +75,13 @@ class FieldsEncryptedIndexTestCommand extends Command
 							{  
 								"fieldName": "migrations.description_plain",   
 								"fieldValue" : "' . $rSentence . '"
-							},
+							}
+
+					]          
+				}';
+
+				/*
+				,
 							{  
 								"fieldName": "migrations.name",   
 								"fieldValue" : "' . $rName . '"
@@ -91,8 +99,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 								"fieldValue" : "' . $rSurname . '"
 							}
 
-					]          
-				}';
+				*/
 
 
 				Log::channel('stderr')->notice('FieldsEncryptedIndex:' . $action, [$i, $jsonRequest] );
@@ -139,15 +146,32 @@ class FieldsEncryptedIndexTestCommand extends Command
 					"where" : [
             
 						{
-							"operator" : "",
+							"operator" : "AND",
 							"clauses" : [
 								{
 									"fieldName" : "migrations.id",
 									"operator" : "<",
-									"value" : 3
+									"value" : 300
+								},
+								{
+									"fieldName" : "migrations.description",
+									"operator" : "=",
+									"value" : "A eveniet suscipit molestiae minus sit tenetur."
 								}
 							]
 						}
+					],
+
+					"order" : [
+
+						{
+							"sortOrder" : "DESC",
+							"fields" : [
+								{  "fieldName": "migrations.id"   }
+							]
+						}
+			
+			
 					]
 					
 			
@@ -160,6 +184,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 				$q = $this->FEI_engine->process($jsonRequest);
 				Log::channel('stderr')->notice('FieldsEncryptedIndex:' . $action, [$q] );
 				Log::channel('stderr')->notice('------------------------------------------------------------------------------------------------------------------', [] );
+				Log::channel('stderr')->notice('<--------------------RISULTATO FINALE----------------------------->', [] );
 
 				foreach($q as $item) 
 				{
@@ -176,6 +201,13 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 		
 			} 
+
+		} elseif ( $action == "encryption" ) {
+			
+			Log::channel('stderr')->notice('FieldsEncryptedIndex:' . $action, [] );
+            $v = \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter::encrypt("TEST");				
+			Log::channel('stderr')->info('ENCRYPTED-->!:', [$v] );
+
 		} else {
 			Log::channel('stderr')->notice('FieldsEncryptedIndex:test: action not found!', [$action] );
 		}

@@ -222,6 +222,31 @@ TODO ESCAPE VALUES
 
 
 
+,
+				{
+                    "fieldName" : "description_plain",
+                    "fieldType" : "STRING"
+                },
+                {
+                    "fieldName" : "name",
+                    "fieldType" : "ENCRYPTED_INDEXED",
+					"EI_MinTokenLen" : 3
+                },
+				{
+                    "fieldName" : "name_plain",
+                    "fieldType" : "STRING"
+                },
+				{
+                    "fieldName" : "surname",
+                    "fieldType" : "ENCRYPTED_INDEXED",
+					"EI_MinTokenLen" : 3
+                },
+				{
+                    "fieldName" : "surname_plain",
+                    "fieldType" : "STRING"
+                }
+
+
 
 
 

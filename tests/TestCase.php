@@ -28,8 +28,8 @@ class TestCase extends \Orchestra\Testbench\TestCase
 
 
 	$app['config']->set('FieldsEncryptedIndex.configFolder','d:/PROGETTI/LARAVEL/FieldsEncryptedIndex/tests/JsonSQL/');
-
     $app['config']->set('database-encryption.enabled', true);
+	
 /*
 	Log::emergency($message);
 	Log::alert($message);
