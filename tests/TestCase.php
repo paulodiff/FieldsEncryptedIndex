@@ -41,7 +41,7 @@ class TestCase extends \Orchestra\Testbench\TestCase
 	Log::debug($message);
 */
 
-    $app['config']->set('logging.channels.stderr.level', 'debug');
+    $app['config']->set('logging.channels.stderr.level', 'notice');
     $app['config']->set('app.key', 'base64:QPE84az7moL6H5xHyV9PYYvlse2C/W9IU3WrvCHKe7U=');
   
     $app['config']->set('database.default', 'mysql');

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Schema\Blueprint;
 use Faker\Factory as Faker;
 
@@ -75,8 +76,23 @@ class FieldsEncryptedIndexTestCommand extends Command
 							{  
 								"fieldName": "migrations.description_plain",   
 								"fieldValue" : "' . $rSentence . '"
+							},
+							{  
+								"fieldName": "migrations.name",   
+								"fieldValue" : "' . $rName . '"
+							},
+							{  
+								"fieldName": "migrations.name_plain",   
+								"fieldValue" : "' . $rName . '"
+							},
+							{  
+								"fieldName": "migrations.surname",   
+								"fieldValue" : "' . $rSurname . '"
+							},
+							{  
+								"fieldName": "migrations.surname_plain",   
+								"fieldValue" : "' . $rSurname . '"
 							}
-
 					]          
 				}';
 
@@ -115,9 +131,36 @@ class FieldsEncryptedIndexTestCommand extends Command
 			for($i = 0; $i<$rows; $i++)
 			{
 
+				$faker = Faker::create('SeedData');
+
+				// get a real description from migration
+
+				$Ids = DB::table('migrations')
+                    ->select('id')
+                    // ->where('rt_tag', $tag)
+                    //->where('rt_key', $key)
+                    ->get();
+
+				$cntIds = count($Ids);
+
+				$idSelected = $faker->numberBetween(1, $cntIds);
+
+				// dd ( $Ids[$idSelected-1] );
+
+				// $val = intval($total_results->getText());
+				// dd ( intval($Ids[$idSelected-1]->id)   );
+
+				$v = DB::table('migrations')
+				// ->select('id')
+				->where('id', intval($Ids[$idSelected-1]->id) )
+				//->where('rt_key', $key)
+				->get();
+
+				// dd($v[0]);
+				// dd($v[0]->description);
 
 				// create JSON request
-				$faker = Faker::create('SeedData');
+				
 				$rNumber = $faker->randomNumber(5, true);
 				$rMigrationName = $faker->name();
 				$rSentence = $faker->sentence();
@@ -152,7 +195,13 @@ class FieldsEncryptedIndexTestCommand extends Command
 									"fieldName" : "migrations.id",
 									"operator" : "<",
 									"fieldValue" : 300
+								},
+								{
+									"fieldName" : "migrations.description",
+									"operator" : "=",
+									"fieldValue" : "' . $v[0]->description_plain . '"
 								}
+
 							]
 						}
 					],
@@ -177,9 +226,18 @@ class FieldsEncryptedIndexTestCommand extends Command
 				
 				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
 				$q = $this->FEI_engine->process($jsonRequest);
-				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$q] );
+				
+				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [ count($q), $q[0]->id , $v[0]->id ] );
 				Log::channel('stderr')->notice('------------------------------------------------------------------------------------------------------------------', [] );
-				Log::channel('stderr')->notice('<--------------------RISULTATO FINALE----------------------------->', [] );
+				Log::channel('stderr')->notice('[[[[['. $i . ']]]]] <<<<<<<RISULTATO FINALE>>>>>>>', [ $v[0]->id, $q[0]->id ] );
+
+				if ( $v[0]->id <> $q[0]->id ) 
+				{
+
+					Log::channel('stderr')->error('<<<<<<< ID ERROR >>>>>>>', [ $v[0]->id, $q[0]->id ] );
+					die();
+
+				}
 
 				foreach($q as $item) 
 				{
@@ -192,6 +250,8 @@ class FieldsEncryptedIndexTestCommand extends Command
 					Log::channel('stderr')->notice( $displayRow );
 
 				}
+
+
 
 
 		

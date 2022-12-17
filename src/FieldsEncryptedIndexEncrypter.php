@@ -65,7 +65,7 @@ class FieldsEncryptedIndexEncrypter
     
     public function encrypt_sodium($s)
     {
-		Log::channel('stderr')->error('encrypt_sodium', [$s] );   
+		Log::channel('stderr')->debug('encrypt_sodium', [$s] );   
 
 		$sc = $this->FEI_config->getSecurityConfig($s['fieldName']);
 
@@ -84,7 +84,7 @@ class FieldsEncryptedIndexEncrypter
     {
         // Log::debug('Encrypter:decrypt ', [] );
 
-		Log::channel('stderr')->error('decrypt_sodium', [$s] );   
+		Log::channel('stderr')->debug('decrypt_sodium', [$s] );   
 
 		$sc = $this->FEI_config->getSecurityConfig($s['fieldName']);
 

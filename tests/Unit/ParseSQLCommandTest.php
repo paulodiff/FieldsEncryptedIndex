@@ -19,21 +19,25 @@ class ParseSQLCommandTest extends TestCase
         // }
         // $this->assertFalse(File::exists(config_path('blogpackage.php')));
         
-
+		/*	
 		$cmd = 'FieldsEncryptedIndex:test encryption 1';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
+		*/
 
-		
-		$cmd = 'FieldsEncryptedIndex:test insertMigrations 50';
+		/*
+		$cmd = 'FieldsEncryptedIndex:test insertMigrations 5';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
+		*/
+				
 		
 		
 		$cmd = 'FieldsEncryptedIndex:test selectMigrations 5';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
 		
+				
 
 		
         $this->assertTrue(true);
