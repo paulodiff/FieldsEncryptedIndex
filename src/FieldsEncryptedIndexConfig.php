@@ -35,6 +35,17 @@ class FieldsEncryptedIndexConfig {
 		"indexes" => 'array'
 	];
 
+
+	public $securityRules = [
+           
+		'tableName' => 'string|required',
+		
+		"fieldsKeys" => 'array|required',
+		"fieldsKeys.*.fieldName" => 'string|required',
+		"fieldsKeys.*.key" => 'string|required',	
+		"fieldsKeys.*.nonce" => 'string|required'		
+
+	];
 	
     public $sqlRequestRules = [
             'action' => [
@@ -68,7 +79,7 @@ class FieldsEncryptedIndexConfig {
     {
         Log::channel('stderr')->debug('FieldsEncryptedIndexConfig __construct', [] );        
 		$this->checkConfig();
-		$this->checkEncryption();
+		// $this->checkEncryption();
     }
     /*
     public function __construct(ConnectionInterface $connection, $model)
@@ -164,6 +175,9 @@ class FieldsEncryptedIndexConfig {
 			die('');
 		}
 	}
+
+	
+
 
 
 	// load config from file in memory
@@ -284,84 +298,67 @@ class FieldsEncryptedIndexConfig {
 
 	}
 
+//------------------------------------ SECURITY ---------------------------------------------------
+	//------------------------------------ SECURITY ---------------------------------------------------
+	//------------------------------------ SECURITY ---------------------------------------------------
+	//------------------------------------ SECURITY ---------------------------------------------------
+	//------------------------------------ SECURITY ---------------------------------------------------
+	// SECUTITY CONFIG UTILS 
+	// LOAD table.keys
 
+	public function getSecurityConfig($fn)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getSecurityConfig', [ $fn ] ); 
+		$pieces = explode(".", $fn);
+        $tname = $pieces[0];
+        $fname = $pieces[1];
+	
+		$sc = $this->loadSecurityConfig($tname);
 
-    /**
-     * @param array|\Closure|string $column
-     * @param null $operator
-     * @param null $value
-     * @param string $boolean
-     * @return Builder
-     * @throws \Exception
-     *
-    public function where($column, $operator = null, $value = null, $boolean = 'and')
-    {
-        Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>>DATI>>>>', [$column, $operator, $value, $boolean] );
-        Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>>RAINBOW CONFIG>>>>', [$this->enc_fields] );
+		foreach( $sc['fieldsKeys'] as $item )
+		{
+			if ( $item['fieldName'] === $fname ) 
+			{
+				return [
+					'key' => $item['key'],
+					'nonce' => $item['nonce']
+				];
+			}
+		}
+		
+		die('Security Error key/nonce not found in : ' . $fn);
 
-        // controllo se il campo è in configurazione e di che tipo
+	}
 
-        if(!is_string($column)) 
-        {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>>>>>>>> NO STRING returm immediatly SIMPLE ----->', [$column, $operator] );
-            return parent::where($column, $operator, $value, $boolean);
-        }
+	public function getSecurityConfigFileName($tn)
+	{
+		return config('FieldsEncryptedIndex.configFolder') . $tn . ".keys";
+	}
 
-        // check type
+	public function loadSecurityConfig($tn)
+	{
+		$cfn = $this->getSecurityConfigFileName($tn);
 
-        $tName = $this->enc_fields['table']['tableName']; 
-        $primaryKey = $this->enc_fields['table']['primaryKey'];  
-        $fName = ""; $fType = "";
-        foreach ($this->enc_fields['fields'] as $key => $val) 
-        {
-            // print_r($key);
-            // print_r($val);
-            if($val['fName'] == $column)
-            {
-                $fName = $column; $fType = $val['fType'];
-                Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>> RAINBOW Field found in enc config!->', [$fName, $fType] );
-            }
-        }
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:loadSecurityConfig', [ $tn, $cfn ] );    
 
-        // se il campo deve utilizzare una RainbowTable
-        if ( is_string($column) && ($operator == 'LIKE') && ($fName !== "") && ($fType == 'ENCRYPTED_FULL_TEXT') )
-        {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>> RAINBOW Table --GO! ENCRYPTED_FULL_TEXT ->', [$column, $operator, $tName, $primaryKey, $fType] );
-            // accesso alla rainbow table per ottenere i valori da mettere nella query tramite ServiceProvider
-            $tag = $tName . ":" . $column;
-            $r = $this->rtService->getRT($tag, $value);
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>> RAINBOW Table --DATA!->', [$tag, $r] );
-            return self::whereIn( $primaryKey , $r );
-            // return self::whereRaw("CONVERT(AES_DECRYPT(FROM_BASE64(`{$filter->field}`), '{$salt}') USING utf8mb4) {$filter->operation} ? ", [$filter->value]);
-        }
-        elseif ( is_string($column) && ($fName !== "") && ($fType == 'ENCRYPTED') )
-        {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>>ENCRYPTED ----->', [$column, $operator, $value] );
-            $operator = FieldsEncryptedIndexEncrypter::encrypt($operator);
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>>ENCRYPTED ----->', [$column, $operator, $value] );
-            return parent::where($column, $operator, $value, $boolean);
-        }
-        else
-        // il campo può essere cifrato o meno ....
-        {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryBuilder:>>>>>>>>> SIMPLE ----->', [$column, $operator] );
-            return parent::where($column, $operator, $value, $boolean);
-        }
+		if ($this->existsConfigFileName($cfn))
+		{
+			$jsonTableConfig = file_get_contents($cfn);
+			$tableArrayConfig = json_decode($jsonTableConfig, true);
+			$Validator = Validator::make($tableArrayConfig, $this->securityRules);
+			if ($Validator->fails()) {
+				Log::channel('stderr')->error('Security config check error!', [$Validator->errors()] );
+				die();
+			}
+			return $tableArrayConfig;
+		}
+		else
+		{
+			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:loadSecurityConfig ERROR - Config file does not exists!', [ $cfn] );    
+			die('');
+		}
+	}
 
-            
-    }
+	
 
-    public function likeEncrypted($param1, $param2, $param3 = null)
-    {
-      $filter            = new \stdClass();
-      $filter->field     = $param1;
-      $filter->operation = isset($param3) ? $param2 : '=';
-      $filter->value     = isset($param3) ? $param3 : $param2;
-
-      // $salt = substr(hash('sha256', config('laravelDatabaseEncryption.encrypt_key')), 0, 16);
-
-      return self::whereRaw("CONVERT(AES_DECRYPT(FROM_BASE64(`{$filter->field}`), '{$salt}') USING utf8mb4) {$filter->operation} ? ", [$filter->value]);
-    }
-
-	*/
 }

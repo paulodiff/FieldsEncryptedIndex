@@ -46,6 +46,7 @@ class FieldsEncryptedIndexQueryRunner {
 		// $this->checkConfig();
 		$this->FEI_config = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexConfig();
 		$this->FEI_service = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexService();
+		$this->FEI_encrypter = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter();
 		// $this->FEI_config->checkConfig();
     }
     /*
@@ -112,13 +113,21 @@ class FieldsEncryptedIndexQueryRunner {
 						// Log::channel('stderr')->info(' ### ', [$fn['fieldName']] );
 						// $object->{'$t'};
 
+						// dd($fn);
+
 						$v = $item->{$fn['fieldName']};
 						Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-U-@', [$v] );
 
 						if(is_null($v)) {
 							Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-D1@', [$v] );
 						} else {
-							$v2 = FieldsEncryptedIndexEncrypter::decrypt($v);	
+							
+							$s = [
+								"fieldName" => $fn['tableName'] . "." . $fn['fieldName'],
+								"fieldValue" => $v
+							];
+
+							$v2 = $this->FEI_encrypter->decrypt_sodium($s);	
 							$item->{$fn['fieldName']} = $v2;
 							Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-D2@', [$v2] );
 						}

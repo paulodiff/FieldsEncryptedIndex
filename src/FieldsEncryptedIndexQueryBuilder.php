@@ -28,6 +28,7 @@ class FieldsEncryptedIndexQueryBuilder {
     protected $rtService;
     public $FEI_config;
     public $FEI_service;
+    public $FEI_encrypter;
 
 	
     /**
@@ -41,6 +42,7 @@ class FieldsEncryptedIndexQueryBuilder {
 		// $this->checkConfig();
 		$this->FEI_config = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexConfig();
 		$this->FEI_service = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexService();
+		$this->FEI_encrypter = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter();
 		// $this->FEI_config->checkConfig();
     }
     /*
@@ -476,11 +478,11 @@ class FieldsEncryptedIndexQueryBuilder {
 
         if (in_array($ft, ["LONG"])) 
         {
-            return  " " . $o['fieldName'] . " " . $o['operator'] . " " . $o['value'] . " ";
+            return  " " . $o['fieldName'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
         } 
 		elseif (in_array($ft, ["STRING"])) 
         {
-            return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['value'] . "' ";
+            return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
         } 
         elseif (in_array($ft, ["ENCRYPTED"]))
         {
@@ -491,10 +493,15 @@ class FieldsEncryptedIndexQueryBuilder {
 			}
 			else 
 			{
-				Log::channel('stderr')->debug('[getFieldClause:', [$o['value']] );
-				Log::channel('stderr')->debug('[getFieldClause:', [FieldsEncryptedIndexEncrypter::encrypt($o['value'])] );
-				Log::channel('stderr')->debug('[getFieldClause:', [FieldsEncryptedIndexEncrypter::encrypt($o['value'])] );
-				$value = FieldsEncryptedIndexEncrypter::encrypt($o['value']);
+				Log::channel('stderr')->debug('getFieldClause:', [$o] );
+				// Log::channel('stderr')->debug('[getFieldClause:', [FieldsEncryptedIndexEncrypter::encrypt($o['value'])] );
+				// Log::channel('stderr')->debug('[getFieldClause:', [FieldsEncryptedIndexEncrypter::encrypt($o['value'])] );
+
+				// $this->FEI_encrypter = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter();
+						
+				$value = $this->FEI_encrypter->encrypt_sodium($o);
+
+				// $value = FieldsEncryptedIndexEncrypter::encrypt($o['value']);
 				Log::channel('stderr')->debug('[getFieldClause:', [$value]);
 								
 
@@ -514,7 +521,7 @@ class FieldsEncryptedIndexQueryBuilder {
 				// Search value in FEI_q
 				// $tag = $tName . ":" .  $o['fieldName'];
 
-				$r = $this->FEI_service->getRT( $o['fieldName'],  $o['value']);
+				$r = $this->FEI_service->getRT( $o['fieldName'],  $o['fieldValue']);
 
 				Log::channel('stderr')->debug('getFieldClause:FEI_service', [$r] );
 
@@ -583,7 +590,7 @@ class FieldsEncryptedIndexQueryBuilder {
 				}
 				elseif (in_array($ft, ["STRING"])) 
 				{
-					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $item['fieldValue'] . "'" : $INSERT_CLAUSE_DN . ",'" . $item['fieldValue'] ."'" ;
+					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $item['fieldValue'] . "'" : $INSERT_CLAUSE_DN . ",'" . addslashes($item['fieldValue']) ."'" ;
 				} 
 				elseif (in_array($ft, ["ENCRYPTED"]))
 				{
@@ -592,16 +599,24 @@ class FieldsEncryptedIndexQueryBuilder {
 
 					Log::channel('stderr')->info('buildInsertClause: ENCRYPTED:', [ $plainValue ] );
 					
-					$value = FieldsEncryptedIndexEncrypter::encrypt( $plainValue );
+					// $value = FieldsEncryptedIndexEncrypter::encrypt( $plainValue );
+
+					$value = $this->FEI_encrypter->encrypt_sodium($item);
+
+					// $value = FieldsEncryptedIndexEncrypter::encrypt($o['value']);
+					Log::channel('stderr')->debug('[getFieldClause:', [$value]);
+
 
 					Log::channel('stderr')->info('buildInsertClause: ENCRYPTED:', [$value] );
-					Log::channel('stderr')->info('buildInsertClause: ENCRYPTED:', [FieldsEncryptedIndexEncrypter::encrypt( $plainValue )] );
+					// Log::channel('stderr')->info('buildInsertClause: ENCRYPTED:', [FieldsEncryptedIndexEncrypter::encrypt( $plainValue )] );
 					
 					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $value . "'": $INSERT_CLAUSE_DN . ",'" . $value . "'";
 				}
 				elseif (in_array($ft, ["ENCRYPTED_INDEXED"]))
 				{
-					$value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+					// $value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+
+					$value = $this->FEI_encrypter->encrypt_sodium($item);
 
 					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $value . "'" : $INSERT_CLAUSE_DN . ",'" . $value ."'";
 					$EncrypedIndexedFiels2Update[] = [
