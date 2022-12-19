@@ -388,35 +388,29 @@ class FieldsEncryptedIndexTestCommand extends Command
 				if ( count($q) <> count($test1)  ) 
 				{
 					Log::channel('stderr')->error('Il numero di righe ritornate non identico', [ count($q), count($test1)  ] );
-
+					die();
 				}
 
 				// verifica degli ids devono essere gli stessi
 
-
-				dd($test1);
-				
-
-				// TEST TEST se ritorno diverso errore
-				if ( $v[0]->id <> $q[0]->id ) 
-				{
-
-					Log::channel('stderr')->error('<<<<<<< ID ERROR >>>>>>>', [ $v[0]->id, $q[0]->id ] );
-					die();
-
-				}
-
+				// recupero prima lista ids
 				foreach($q as $item) 
 				{
 					// Log::channel('stderr')->notice( '#', [$item] );
-					$displayRow = "";
-					foreach ($item as $key => $value) {
-						// echo "$key => $value\n";
-						$displayRow = $displayRow . "|" . $value;
-					}
-					Log::channel('stderr')->notice( $displayRow );
+					Log::channel('stderr')->notice( $item->id );
 
 				}
+				// test1
+
+
+				foreach($test1 as $item) 
+				{
+					// Log::channel('stderr')->notice( '#', [$item] );
+					Log::channel('stderr')->notice( $item->id );
+
+				}
+
+				// recupero seconda lista ids
 		
 			} 
 
