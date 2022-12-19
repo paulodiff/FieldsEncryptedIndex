@@ -30,11 +30,11 @@ class FieldsEncryptedIndexService
 
     public function __construct() {
         // echo "RainbowTable build mwl:" . $mwl . " sp:" . $sp .  "\n";
-        Log::channel('stderr')->debug('FieldsEncryptedIndexService!__construct', [] );
+        Log::channel('stderr')->debug('FEIS!__construct', [] );
         $this->MIN_TOKEN_SIZE = 3;
         $this->STRING_SEPARATOR = ";";
-        Log::channel('stderr')->debug('FieldsEncryptedIndexService!MIN_TOKEN_SIZE', [$this->MIN_TOKEN_SIZE] );
-        Log::channel('stderr')->debug('FieldsEncryptedIndexService!STRING_SEPARATOR', [$this->STRING_SEPARATOR] );
+        Log::channel('stderr')->debug('FEIS!MIN_TOKEN_SIZE', [$this->MIN_TOKEN_SIZE] );
+        Log::channel('stderr')->debug('FEIS!STRING_SEPARATOR', [$this->STRING_SEPARATOR] );
     }
 
 
@@ -119,7 +119,7 @@ class FieldsEncryptedIndexService
     {
       // sanitize string
       // $this->db->log("RT_add_2 start : " . $index . " " . $s, []);
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!setRT!:', [$tag, $s, $index] );
+      Log::channel('stderr')->debug('FEIS!setRT!:', [$tag, $s, $index] );
 
       // sanitizza la stringa rimuovendo i caratteri speciali
       $s = $this->sanitize_string($s);
@@ -149,7 +149,7 @@ class FieldsEncryptedIndexService
 	/*
     public function setRT($tag, $s, $index)
     {
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!setRT*!:', [$tag, $s, $index] );
+      Log::channel('stderr')->debug('FEIS!setRT*!:', [$tag, $s, $index] );
       return $this->setToStorage($tag, $s, $index);
     }
 	*/
@@ -187,19 +187,22 @@ class FieldsEncryptedIndexService
     }
     */
 
+	/* DA REIMPLEMENTARE
     public function getRT($tag, $s)
     {
         $s2 = str_replace("%", "", $s);
-        Log::channel('stderr')->debug('FieldsEncryptedIndexService!getRT*!:', [$tag, $s, $s2] );
+        Log::channel('stderr')->debug('FEIS!getRT*!:', [$tag, $s, $s2] );
         $r = $this->getFromStorage($tag, $s2);
         // print_r($pieces);
         $u = array_unique($r, SORT_STRING);
-        Log::channel('stderr')->debug("FieldsEncryptedIndexService!getRT!:" . $s2 . " " . json_encode($u), []);
+        Log::channel('stderr')->debug("FEIS!getRT!:" . $s2 . " " . json_encode($u), []);
         // echo "RainbowTable search result for :" . $multiple_token_string . "\n";
         // print_r($u);
         return $u;
     }
+	*/
 
+	/* DA REIMPLEMENTARE
     // Elimina tutte le entry/righe dell'indice relative ad una determinata coppia TAG/ID
     public function delRT($tag, $index)
     {
@@ -207,7 +210,9 @@ class FieldsEncryptedIndexService
         $this->deleteFromStorage($tag, $index);
         return true;
     }
+	*/
 
+	/* DA REIMPLEMENTARE
     // Reset index from TAG - DESTROY INDEX!
     public function resetRT($tag)
     {
@@ -215,6 +220,7 @@ class FieldsEncryptedIndexService
         $this->resetIndexFromStorage($tag);
         return true;
     }
+	*/
 
 
 
@@ -262,7 +268,7 @@ class FieldsEncryptedIndexService
         {
           $key = FieldsEncryptedIndexEncrypter::hash($key);
         }
-        Log::channel('stderr')->debug('RainbowTableService!getFromStorage!', [$tname, $tag, $key] );
+        Log::channel('stderr')->debug('FEIS!getFromStorage!', [$tname, $tag, $key] );
 
         $r = DB::table($tname)
                     ->select('rt_value')
@@ -291,7 +297,7 @@ class FieldsEncryptedIndexService
           $key = FieldsEncryptedIndexEncrypter::hash($key);
         }
 
-        Log::channel('stderr')->debug('FieldsEncryptedIndexService!setToStorage!', [$tname, $tag, $key, $value] );
+        Log::channel('stderr')->debug('FEIS!setToStorage!', [$tname, $tag, $key, $value] );
         DB::table($tname)->insertOrIgnore([
             [
                 // 'rt_tag' => $tag,
@@ -305,7 +311,7 @@ class FieldsEncryptedIndexService
 
     function deleteFromStorage($tag, $value)
     {
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!deleteFromStorage!', [$tag, $value] );
+      Log::channel('stderr')->debug('FEIS!deleteFromStorage!', [$tag, $value] );
       $tname = $this->setupStorage($tag);
 
       DB::table($tname)
@@ -317,13 +323,16 @@ class FieldsEncryptedIndexService
 
     function resetIndexFromStorage($tag)
     {
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!resetIndexFromStorage!', [$tag] );
+      Log::channel('stderr')->debug('FEIS!resetIndexFromStorage!', [$tag] );
       $tname = $this->setupStorage($tag);
       DB::table($tname)
       // ->where('rt_tag', $tag)
       ->delete();
     }
 
+
+	// Controlla che eista la tabella per contenere l'indice
+	// $tag deve essere nella forma TABLENAME:FIELDNAME
     function setupStorage($tag)
     {
 
@@ -338,7 +347,7 @@ class FieldsEncryptedIndexService
 
 		$tname = $this->slugify($prefix . "-" . $tag);
 
-		Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tname] );
+		Log::channel('stderr')->debug('FEIS!setupStorage!', [$tname] );
 		
 		if (config('FieldsEncryptedIndex.encrypt'))
 		{
@@ -347,10 +356,10 @@ class FieldsEncryptedIndexService
 
       
 
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tname] );
+      Log::channel('stderr')->debug('FEIS!setupStorage!', [$tname] );
 
       if ( !Schema::hasTable($tname)) {
-        Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!CREATE TABLE', [$tname] );
+        Log::channel('stderr')->debug('FEIS!setupStorage!CREATE TABLE', [$tname] );
 
         
 		Schema::create($tname, function(Blueprint $table)
@@ -369,6 +378,9 @@ class FieldsEncryptedIndexService
     }
 
 	// --------------------------------------------------------------------------------------------------------------
+	// 											NUOVE IMPLEMENTAZIONI
+	// --------------------------------------------------------------------------------------------------------------
+	// --------------------------------------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------------------------------------
 	// --------------------------------------------------------------------------------------------------------------
@@ -384,7 +396,7 @@ class FieldsEncryptedIndexService
 	// Salva i valori dell'indice ...
 	function FEI_set($tableName, $fieldName, $fieldValue, $value)
 	{
-		Log::channel('stderr')->debug('FieldsEncryptedIndexService!setupStorage!', [$tableName, $fieldName, $fieldValue, $value] );
+		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tableName, $fieldName, $fieldValue, $value] );
 
 
 		// $data = self::rtiSanitize($fValue, $fSafeChars, $fTransform);
@@ -393,6 +405,7 @@ class FieldsEncryptedIndexService
 		// $keyList = $this->feiTokenize($fieldValue, $fMinTokenLen);
 		$keyList = $this->feiTokenize($fieldValue, 3);
 
+		// TODO function makeTag TAG!
 		$tag = $tableName . ":" . $fieldName;
 
 		foreach( $keyList as $tokenValue )
@@ -416,7 +429,45 @@ class FieldsEncryptedIndexService
 	// Recupera i valori dell'indice ...
 	function FEI_get($tableName, $fieldName, $fieldValue)
 	{
+		Log::channel('stderr')->debug('FEIS!FEI_get:', [$tableName, $fieldName, $fieldValue] );
 
+		// $s2 = str_replace("%", "", $s);
+        // Log::channel('stderr')->debug('FEIS!getRT*!:', [$tag, $s, $s2] );
+
+		// TODO function makeTag TAG!
+		$tag = $tableName . ":" . $fieldName;
+
+
+        $r = $this->getFromStorage($tag, $fieldValue);
+        // print_r($pieces);
+
+		// print_r($r);
+
+        $u = array_unique($r, SORT_STRING);
+
+		// dd(json_encode($u));
+
+        Log::channel('stderr')->debug("FEIS!getRT!:" . json_encode($u), []);
+        // echo "RainbowTable search result for :" . $multiple_token_string . "\n";
+        // print_r($u);
+        return $u;
+
+	}
+
+
+	// DROP DELL'INDICE
+	function FEI_drop($tableName, $fieldName)
+	{
+		Log::channel('stderr')->debug('FEIS!FEI_drop:', [$tableName, $fieldName] );
+		// TODO function makeTag TAG!
+		$tag = $tableName . ":" . $fieldName;
+
+
+        $r = $this->resetIndexFromStorage($tag);
+        // print_r($pieces);
+
+        
+        return true;
 
 	}
 
@@ -429,7 +480,7 @@ class FieldsEncryptedIndexService
       $SAFE_CHARS=" àèéìòùqwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM.";
       $SAFE_CHARS = $safeChars;
 
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!rtiSanitize!', [$s, $safeChars, $fTransform] );
+      Log::channel('stderr')->debug('FEIS!rtiSanitize!', [$s, $safeChars, $fTransform] );
 
 
 	  if (str_contains($fTransform, "UPPER_CASE")) 
@@ -508,7 +559,7 @@ class FieldsEncryptedIndexService
         $pieces2[] = $s;
       }     
 
-      Log::channel('stderr')->debug('FieldsEncryptedIndexService!rtiTokenize!', [$s, $minTokenLen, $pieces2] );
+      Log::channel('stderr')->debug('FEIS!rtiTokenize!', [$s, $minTokenLen, $pieces2] );
 
       $toReturn = [];
       foreach ($pieces2 as $key=>$value)

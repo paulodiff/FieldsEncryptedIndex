@@ -62,7 +62,7 @@ class FieldsEncryptedIndexQueryRunner {
 	public function runQuery(array $q) 
 	{
 
-		Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery', [$q] );
+		Log::channel('stderr')->info('FEIQR!runQuery', [$q] );
 
 		$verbClause = $q['verbClause'];
 
@@ -70,19 +70,19 @@ class FieldsEncryptedIndexQueryRunner {
 		{
 			// get connection
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:SELECT', [$q] );
+			Log::channel('stderr')->info('FEIQR!runQuery:SELECT', [$q] );
 
 			$sqlStatement = $q['sqlStatement'];
 
 			Log::channel('stderr')->info('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@', [] );
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:EXEC', [$sqlStatement] );
+			Log::channel('stderr')->info('FEIQR!runQuery:EXEC', [$sqlStatement] );
 			Log::channel('stderr')->info('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@', [] );
 
 			// $results = DB::select( DB::raw("SELECT * FROM some_table WHERE some_col = :somevariable"), array(  'somevariable' => $someVariable,
 
 			$rs = DB::select( DB::raw($sqlStatement) );
 	
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:DATA', [$rs] );
+			Log::channel('stderr')->info('FEIQR!runQuery:DATA', [$rs] );
 
 			/*
 			foreach($rs as $item) 
@@ -99,7 +99,7 @@ class FieldsEncryptedIndexQueryRunner {
 				
 				$toDecrypt = $q['fiels2decrypt'];
 
-				Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:TO_DECRYPT', [$toDecrypt] );
+				Log::channel('stderr')->info('FEIQR!runQuery:TO_DECRYPT', [$toDecrypt] );
 
 				foreach($rs as $item) 
 				{
@@ -116,10 +116,10 @@ class FieldsEncryptedIndexQueryRunner {
 						// dd($fn);
 
 						$v = $item->{$fn['fieldName']};
-						Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-U-@', [$v] );
+						Log::channel('stderr')->info('FEIQR!runQuery:@@CHECK@-U-@', [$v] );
 
 						if(is_null($v)) {
-							Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-D1@', [$v] );
+							Log::channel('stderr')->info('FEIQR!runQuery:@@CHECK@-D1@', [$v] );
 						} else {
 							
 							$s = [
@@ -129,7 +129,7 @@ class FieldsEncryptedIndexQueryRunner {
 
 							$v2 = $this->FEI_encrypter->decrypt_sodium($s);	
 							$item->{$fn['fieldName']} = $v2;
-							Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:@@CHECK@-D2@', [$v2] );
+							Log::channel('stderr')->info('FEIQR!runQuery:@@CHECK@-D2@', [$v2] );
 						}
 
 						
@@ -157,13 +157,13 @@ class FieldsEncryptedIndexQueryRunner {
 			}  
 
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:TO_ORDER', [$toDecrypt] );
+			Log::channel('stderr')->info('FEIQR!runQuery:TO_ORDER', [$toDecrypt] );
 		
 
 			// order values if encrypted
 
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:TO_LIMIT', [$toDecrypt] );
+			Log::channel('stderr')->info('FEIQR!runQuery:TO_LIMIT', [$toDecrypt] );
 
 			// limit
 
@@ -175,10 +175,10 @@ class FieldsEncryptedIndexQueryRunner {
 
 		elseif ($verbClause === "INSERT") 
 		{
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:INSERT', [$q] );
+			Log::channel('stderr')->info('FEIQR!runQuery:INSERT', [$q] );
 			$sqlStatement = $q['sqlStatement'];
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:EXEC', [$sqlStatement] );
+			Log::channel('stderr')->info('FEIQR!runQuery:EXEC', [$sqlStatement] );
 
 			DB::statement($sqlStatement);
 
@@ -187,7 +187,7 @@ class FieldsEncryptedIndexQueryRunner {
 
 			$lastInsertId = DB::getPdo()->lastInsertId();
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:ID', [$lastInsertId] );
+			Log::channel('stderr')->info('FEIQR!runQuery:ID', [$lastInsertId] );
 
 			// INSERIMENTO DI TUTTE LE CHIAVI SUL DATABASE
 			
@@ -200,26 +200,100 @@ class FieldsEncryptedIndexQueryRunner {
 			if (array_key_exists('EncrypedIndexedFiels2Update', $q))
 			{
 
-				Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:UPDATE INDEK KEYS ', [] );
+				Log::channel('stderr')->info('FEIQR!runQuery:UPDATE INDEK KEYS ', [] );
 				
 				$EncrypedIndexedFiels2Update = $q['EncrypedIndexedFiels2Update'];
 
 				foreach ($EncrypedIndexedFiels2Update  as $item ) 
 				{
 	
-					Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:UPDATE INDEX ', [$item] );
-					$this->FEI_service->FEI_SET($item['tableName'], $item['fieldName'],  $item['fieldValue'], $lastInsertId);
-	
-				}
+					Log::channel('stderr')->info('FEIQR!runQuery:UPDATE INDEX ', [$item] );
 				
 
+					// split name
 
+					$pieces = explode(".", $item['fieldName']);
+					$tname = $pieces[0];
+					$fname = $pieces[1];
+
+					$this->FEI_service->FEI_set($item['tableName'], $fname,  $item['fieldValue'], $lastInsertId);
+	
+				}
 			}
 
+			Log::channel('stderr')->info('FEIQR!runQuery:INSERT', ['---OK---'] );
 
-			
+		}
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:runQuery:INSERT', ['---OK---'] );
+		elseif ($verbClause === "REINDEX")
+		{
+
+			Log::channel('stderr')->info('FEIQR!runQuery:REINDEX', [$q] );
+
+			// - Per ogni campo il cui indice è ENCRYPTED_INDEX
+			// - Eliminazione vecchio indice
+			// - Recupero tutti i dati
+			// - Inserimnento nuovi valori nell'indice
+
+
+			if ( array_key_exists('fiels2decrypt', $q) ) 
+			{
+				
+				$toDecrypt = $q['fiels2decrypt'];
+
+				Log::channel('stderr')->info('FEIQR!runQuery:REINDEX:TO_DECRYPT', [$toDecrypt] );
+
+				foreach( $toDecrypt as $fn)
+				{
+
+					if($fn['fieldType'] === "ENCRYPTED_INDEXED")
+					{
+
+
+						// DROP INDEX
+						$this->FEI_service->FEI_drop($fn['tableName'], $fn['fieldName']);
+
+						Log::channel('stderr')->info('FEIQR!REINDEX:!!!!', [$fn] );
+
+						// Get all data and reindex
+
+						$primaryKey = $this->FEI_config->getTablePrimaryKey($fn['tableName']);
+						$fieldToReindex = $fn['fieldName'];
+
+						// Get primary Key --
+						// SELECT PkId, Fname FROM tname ....
+
+						$sqlStatement = " SELECT " . $primaryKey . "," . $fieldToReindex . "  FROM " . $fn['tableName'];
+
+						Log::channel('stderr')->info('FEIQR!runQuery:REINDEX:EXEC', [$sqlStatement] );
+
+						$rs = DB::select( DB::raw($sqlStatement) );
+
+
+						foreach($rs as $item) 
+						{
+
+							$s = [
+								"fieldName" => $fn['tableName'] . "." . $fn['fieldName'],
+								"fieldValue" => $item->{$fieldToReindex}
+							];
+
+							$v2 = $this->FEI_encrypter->decrypt_sodium($s);	
+							$this->FEI_service->FEI_set($fn['tableName'], $fn['fieldName'],  $v2, $item->id );
+
+						}
+
+
+					}
+
+					// Log::channel('stderr')->info(' ### ', [$fn] );
+					// Log::channel('stderr')->info(' ### ', [$fn['fieldName']] );
+					// $object->{'$t'};
+
+					// dd($fn);		
+
+				}  
+			}
 
 		}
 
@@ -230,15 +304,7 @@ class FieldsEncryptedIndexQueryRunner {
 
 		}
 
-		
-
-
-		// "SELECT" recuperare i dati e decodifica ... order by ecc.
-
-		// "UPDATE " ...
-
-		// "INSERT" .. inserire e aggiornare gli indici ...
-
+	
 
 
 
@@ -250,10 +316,10 @@ class FieldsEncryptedIndexQueryRunner {
 	{
 
 
-		Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:#############', ['----------------------------------------------------------------'] );
-		Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### VERB ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+		Log::channel('stderr')->info('FEIQR!#############', ['----------------------------------------------------------------'] );
+		Log::channel('stderr')->info('FEIQR!### VERB ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
         $verbClause = $this->buildVerbClause($sqlRequest); 
-        Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### VERB SQL-> ##', [$verbClause] );
+        Log::channel('stderr')->info('FEIQR!### VERB SQL-> ##', [$verbClause] );
 
 		$Response = [];
 
@@ -262,55 +328,55 @@ class FieldsEncryptedIndexQueryRunner {
 
 
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### 1 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info('FEIQR!### 1 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$fromTableClause = $this->buildFromTableClause($sqlRequest, " FROM "); 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### FROM TABLE SQL-> ##', [$fromTableClause] );
+			Log::channel('stderr')->info('FEIQR!### FROM TABLE SQL-> ##', [$fromTableClause] );
 
 			// check fields and table name se esistono e di che tipo sono
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### FIELDS ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info('FEIQR!### FIELDS ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 
 			$fieldsClause = $this->buildFieldsClause($sqlRequest); 
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### FIELDS SQL ####', [$fieldsClause] );
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### WHERE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info('FEIQR!### FIELDS SQL ####', [$fieldsClause] );
+			Log::channel('stderr')->info('FEIQR!### WHERE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 
 			try
 			{
 				$whereClause = $this->buildWhereClause($sqlRequest['where'][0]);
-				Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### WHERE COND SQL-> ##', [$whereClause] );
+				Log::channel('stderr')->info('FEIQR!### WHERE COND SQL-> ##', [$whereClause] );
 
 			} 
 			catch (FieldsEncryptedIndexException $e) {
-				Log::channel('stderr')->error('FieldsEncryptedIndexQueryRunner:Exception:', [$e->getMessage()] );
+				Log::channel('stderr')->error('FEIQR!Exception:', [$e->getMessage()] );
 				die();
 			}
 
 	
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### JOIN ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info('FEIQR!### JOIN ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$joinClause = $this->buildJoinClause($sqlRequest); 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### JOIN SQL-> ##', [$joinClause] );
+			Log::channel('stderr')->info('FEIQR!### JOIN SQL-> ##', [$joinClause] );
 
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### ORDER ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info('FEIQR!### ORDER ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$orderClause = $this->buildOrderClause($sqlRequest); 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### ORDER SQL-> ##', [$orderClause] );
+			Log::channel('stderr')->info('FEIQR!### ORDER SQL-> ##', [$orderClause] );
 
 			$sqlStatement = $verbClause . " " . $fieldsClause['SQL'] . " " . $fromTableClause . " " . $joinClause . " " . $whereClause . " " . $orderClause;
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:FINAL STATEMENT:', [$sqlStatement ] );
+			Log::channel('stderr')->info('FEIQR!FINAL STATEMENT:', [$sqlStatement ] );
 
 		}
 
 		else if ($verbClause === "INSERT")
 		{
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### 2 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info('FEIQR!### 2 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$fromTableClause = $this->buildFromTableClause($sqlRequest, " INTO "); 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### FROM TABLE SQL-> ##', [$fromTableClause] );
+			Log::channel('stderr')->info('FEIQR!### FROM TABLE SQL-> ##', [$fromTableClause] );
 
 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### INSERT CLAUSE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info('FEIQR!### INSERT CLAUSE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$insertClause = $this->buildInsertClause($sqlRequest); 
-			Log::channel('stderr')->info('FieldsEncryptedIndexQueryRunner:### INSERT CLAUSE SQL-> ##', [$insertClause] );
+			Log::channel('stderr')->info('FEIQR!### INSERT CLAUSE SQL-> ##', [$insertClause] );
 
 			$sqlStatement = $verbClause . " " . " " . $fromTableClause . " " . $insertClause['SQL'] ;
 
@@ -321,7 +387,7 @@ class FieldsEncryptedIndexQueryRunner {
 
 		{
 
-			Log::channel('stderr')->error('FieldsEncryptedIndexQueryRunner:### VERB not defined! ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->error('FEIQR!### VERB not defined! ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			die();
 
 		}
@@ -338,7 +404,7 @@ class FieldsEncryptedIndexQueryRunner {
 		{
 			return true;
 		} else {
-			throw new FieldsEncryptedIndexException('FieldsEncryptedIndexQueryRunner:LastInsertedId NOT FOUND');
+			throw new FieldsEncryptedIndexException('FEIQR!LastInsertedId NOT FOUND');
 		}
 
 	}
@@ -809,7 +875,7 @@ class FieldsEncryptedIndexQueryRunner {
 	// test config
 	public function checkConfig()
 	{
-		Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:checkConfig', [ config('FieldsEncryptedIndex.configFolder') ] );    
+		Log::channel('stderr')->debug('FEIQR!checkConfig', [ config('FieldsEncryptedIndex.configFolder') ] );    
 	}
 
 
@@ -820,7 +886,7 @@ class FieldsEncryptedIndexQueryRunner {
 
 	public function existsConfigFileName($fn)
 	{
-		Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:existsConfigFileName', [ $fn ] );    
+		Log::channel('stderr')->debug('FEIQR!existsConfigFileName', [ $fn ] );    
 		return file_exists($fn);
 	}
 
@@ -968,14 +1034,14 @@ class FieldsEncryptedIndexQueryRunner {
      *
     public function where($column, $operator = null, $value = null, $boolean = 'and')
     {
-        Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>>DATI>>>>', [$column, $operator, $value, $boolean] );
-        Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>>RAINBOW CONFIG>>>>', [$this->enc_fields] );
+        Log::channel('stderr')->debug('FEIQR!>>>DATI>>>>', [$column, $operator, $value, $boolean] );
+        Log::channel('stderr')->debug('FEIQR!>>>RAINBOW CONFIG>>>>', [$this->enc_fields] );
 
         // controllo se il campo è in configurazione e di che tipo
 
         if(!is_string($column)) 
         {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>>>>>>>> NO STRING returm immediatly SIMPLE ----->', [$column, $operator] );
+            Log::channel('stderr')->debug('FEIQR!>>>>>>>>> NO STRING returm immediatly SIMPLE ----->', [$column, $operator] );
             return parent::where($column, $operator, $value, $boolean);
         }
 
@@ -991,32 +1057,32 @@ class FieldsEncryptedIndexQueryRunner {
             if($val['fName'] == $column)
             {
                 $fName = $column; $fType = $val['fType'];
-                Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>> RAINBOW Field found in enc config!->', [$fName, $fType] );
+                Log::channel('stderr')->debug('FEIQR!>>> RAINBOW Field found in enc config!->', [$fName, $fType] );
             }
         }
 
         // se il campo deve utilizzare una RainbowTable
         if ( is_string($column) && ($operator == 'LIKE') && ($fName !== "") && ($fType == 'ENCRYPTED_FULL_TEXT') )
         {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>> RAINBOW Table --GO! ENCRYPTED_FULL_TEXT ->', [$column, $operator, $tName, $primaryKey, $fType] );
+            Log::channel('stderr')->debug('FEIQR!>>> RAINBOW Table --GO! ENCRYPTED_FULL_TEXT ->', [$column, $operator, $tName, $primaryKey, $fType] );
             // accesso alla rainbow table per ottenere i valori da mettere nella query tramite ServiceProvider
             $tag = $tName . ":" . $column;
             $r = $this->rtService->getRT($tag, $value);
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>> RAINBOW Table --DATA!->', [$tag, $r] );
+            Log::channel('stderr')->debug('FEIQR!>>> RAINBOW Table --DATA!->', [$tag, $r] );
             return self::whereIn( $primaryKey , $r );
             // return self::whereRaw("CONVERT(AES_DECRYPT(FROM_BASE64(`{$filter->field}`), '{$salt}') USING utf8mb4) {$filter->operation} ? ", [$filter->value]);
         }
         elseif ( is_string($column) && ($fName !== "") && ($fType == 'ENCRYPTED') )
         {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>>ENCRYPTED ----->', [$column, $operator, $value] );
+            Log::channel('stderr')->debug('FEIQR!>>>ENCRYPTED ----->', [$column, $operator, $value] );
             $operator = FieldsEncryptedIndexEncrypter::encrypt($operator);
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>>ENCRYPTED ----->', [$column, $operator, $value] );
+            Log::channel('stderr')->debug('FEIQR!>>>ENCRYPTED ----->', [$column, $operator, $value] );
             return parent::where($column, $operator, $value, $boolean);
         }
         else
         // il campo può essere cifrato o meno ....
         {
-            Log::channel('stderr')->debug('FieldsEncryptedIndexQueryRunner:>>>>>>>>> SIMPLE ----->', [$column, $operator] );
+            Log::channel('stderr')->debug('FEIQR!>>>>>>>>> SIMPLE ----->', [$column, $operator] );
             return parent::where($column, $operator, $value, $boolean);
         }
 

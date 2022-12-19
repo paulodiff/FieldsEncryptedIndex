@@ -192,6 +192,28 @@ class FieldsEncryptedIndexConfig {
         return $gct;
     }
 
+
+	// load primary key name from table
+	public function getTablePrimaryKey($tn)
+    {
+        Log::channel('stderr')->debug('getTablePrimaryKey:', [$tn] );
+		
+        $gc = $this->getTableConfig($tn);
+
+		if ( array_key_exists('primaryKey', $gc) )
+		{
+			return $gc['primaryKey'];
+		} 
+		else 
+		{
+			Log::channel('stderr')->debug('getTablePrimaryKey:NOT FOUND!', [$tn] );
+            die();
+		}
+			
+        // return $gct;
+    }
+
+
     public function getFieldTypeDefinition($fn)
     {
         // Log::channel('stderr')->info('getFieldTypeDefinition:', [$fn] );

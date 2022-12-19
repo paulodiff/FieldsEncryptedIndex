@@ -76,9 +76,12 @@ class FieldsEncryptedIndexEngine {
 
 		// "INSERT" .. inserire e aggiornare gli indici ...
 
+		// REINDEX tablename;
+
 		return $r;
 
 	}
+
 
 
 	

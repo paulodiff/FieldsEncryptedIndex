@@ -25,17 +25,36 @@ class ParseSQLCommandTest extends TestCase
         Artisan::call($cmd);
 		*/
 
+		
 		/*
-		$cmd = 'FieldsEncryptedIndex:test insertMigrations 5';
+		$cmd = 'FieldsEncryptedIndex:test insertMigrations 1';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 		*/
+
+		/*
+		$cmd = 'FieldsEncryptedIndex:test reindexMigrations 0';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+		Artisan::call($cmd);
+		*/
+		
 				
+		/*
 		
-		
-		$cmd = 'FieldsEncryptedIndex:test selectMigrations 5';
+		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncrypted 5';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
+		*/
+		
+
+		
+		
+		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncryptedIndex 1';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+        Artisan::call($cmd);
+		
+		
+		
 		
 				
 
