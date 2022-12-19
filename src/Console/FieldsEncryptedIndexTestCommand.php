@@ -18,7 +18,7 @@ use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter;
 
 class FieldsEncryptedIndexTestCommand extends Command
 {
-    protected $signature = 'FieldsEncryptedIndex:test {action} {rows}';
+    protected $signature = 'FieldsEncryptedIndex:test {action} {rows} {fieldName?}';
 
     protected $description = 'dbSeed with FieldsEncryptedIndexEngine';
 	public $FEI_engine;
@@ -26,11 +26,10 @@ class FieldsEncryptedIndexTestCommand extends Command
     public function handle()
     {
         
-
 		$action = $this->argument('action');
 		$rows = $this->argument('rows');
+		$fieldName = $this->argument('fieldName');
 		
-
 		Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:test:', [$action, $rows] );
 		
 		// esegue $rows inserimenti ...
@@ -41,7 +40,6 @@ class FieldsEncryptedIndexTestCommand extends Command
 			for($i = 0; $i<$rows; $i++)
 			{
 
-
 				// create JSON request
 				$faker = Faker::create('SeedData');
 				$rNumber = $faker->randomNumber(5, true);
@@ -50,7 +48,6 @@ class FieldsEncryptedIndexTestCommand extends Command
 				// $rSentence = 'A eveniet suscipit molestiae minus sit tenetur.';
 				$rName = $faker->words(3, true);
 				$rSurname = $faker->words(3, true);
-
 
 				$jsonRequest = '{
 					"action"    : "INSERT",
@@ -264,8 +261,16 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 			// prende un valore random e poi esegue due query e verifica i risultati
 
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $rows, [$action] );
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $fieldName, [$action] );
+
 			for($i = 0; $i<$rows; $i++)
 			{
+
+
+				Log::channel('stderr')->debug('**********************************************************************:' . $i, [$action] );
+				Log::channel('stderr')->debug('FieldsEncryptedIndexTestCommand:' . $i, [$action] );
+				
 
 				$faker = Faker::create('SeedData');
 
@@ -295,7 +300,10 @@ class FieldsEncryptedIndexTestCommand extends Command
 				// dd($v[0]);
 				// dd($v[0]->description);
 
-				$textFromSearch = $v[0]->name_plain;
+				$plain_fieldName = $fieldName . "_plain";
+
+				
+				$textFromSearch = $v[0]->{$plain_fieldName};
 
 				// create JSON request
 				
@@ -311,21 +319,27 @@ class FieldsEncryptedIndexTestCommand extends Command
 				{
 					$toSearch = substr($textFromSearch, $j ,3);
 					$toSearch = trim($toSearch);
-					Log::channel('stderr')->notice('KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK:', [$j, $toSearch, $textFromSearch] );
+					// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:SEACH TOKEN:', [$j, $toSearch, $textFromSearch] );
 					if (strlen($toSearch) == 3) break;
 				}
 
+
+				$toSearch = "QUQUQUQQUQUQUQ";
+
+
 				// +++++ TO REMOVE ++++
-				$toSearch = 'cum';
+				// $toSearch = 'cum';
 
 				// ricerca originale
 
 				$test1 = DB::table('migrations')
 				// ->select('id')
-				->where('name_plain', 'LIKE',  '%' . $toSearch . '%')
+				->where($fieldName . '_plain', 'LIKE',  '%' . $toSearch . '%')
 				//->where('rt_key', $key)
 				->get();
 
+
+				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:SEARCH:', [$toSearch,$fieldName, $textFromSearch] );
 
 				$jsonRequest = '{
 					"action" : "SELECT",
@@ -351,7 +365,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 							"operator" : "AND",
 							"clauses" : [
 								{
-									"fieldName" : "migrations.name",
+									"fieldName" : "migrations.' . $fieldName . '",
 									"operator" : "LIKE",
 									"fieldValue" : "' . $toSearch . '"
 								}
@@ -375,15 +389,14 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 						}';
 
-				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $toSearch, $jsonRequest] );
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $toSearch, $jsonRequest] );
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $toSearch, $jsonRequest] );
 				
 				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
 				$q = $this->FEI_engine->process($jsonRequest);
 				
-				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [ count($q), count($test1) ] );
-				Log::channel('stderr')->notice('------------------------------------------------------------------------------------------------------------------', [] );
-				Log::channel('stderr')->notice('[[[[['. $i . ']]]]] <<<<<<<RISULTATO FINALE>>>>>>>', [ $v[0]->id, $q[0]->id ] );
-
+				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:Conteggio n. rec:', [ count($q), count($test1) ] );
+				
 
 				if ( count($q) <> count($test1)  ) 
 				{
@@ -394,22 +407,40 @@ class FieldsEncryptedIndexTestCommand extends Command
 				// verifica degli ids devono essere gli stessi
 
 				// recupero prima lista ids
+				$id1 = [];
 				foreach($q as $item) 
 				{
 					// Log::channel('stderr')->notice( '#', [$item] );
-					Log::channel('stderr')->notice( $item->id );
-
+					Log::channel('stderr')->debug( $item->id );
+					$id1[] = $item->id;
 				}
 				// test1
 
-
-				foreach($test1 as $item) 
+				$id2 = [];
+				foreach($test1 as $item2) 
 				{
 					// Log::channel('stderr')->notice( '#', [$item] );
-					Log::channel('stderr')->notice( $item->id );
+					Log::channel('stderr')->debug( $item2->id );
+					$id2[] = $item2->id;
 
 				}
 
+				sort($id1);
+				sort($id2);
+
+				if( $id1 ==  $id2 )
+				{
+					Log::channel('stderr')->debug('FieldsEncryptedIndexTestCommand:OK same array ', [ $id1, $id2 ] );
+				}
+				else
+				{
+					Log::channel('stderr')->error('FieldsEncryptedIndexTestCommand:ERRORArray are not THE SAME', [ $id1, $id2 ] );
+					die();
+
+				}
+
+				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand[' . $i . '] ' . $action . ' :FINAL!:', [] );
+				
 				// recupero seconda lista ids
 		
 			} 
@@ -437,7 +468,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 						}
 					],
 				"fields" : [
-						{  "fieldName": "migrations.description"   },
+						{  "fieldName": "migrations.surname"   },
 						{  "fieldName": "migrations.name"   }
 				]
 			}';
