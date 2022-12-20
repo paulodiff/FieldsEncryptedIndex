@@ -60,10 +60,10 @@ class FieldsEncryptedIndexQueryBuilder {
 	{
 
 
-		Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:#############', ['----------------------------------------------------------------'] );
-		Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### VERB ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+		Log::channel('stderr')->info($this->SHORT_NAME  . '[START]:#####################################################', [] );
+		Log::channel('stderr')->info($this->SHORT_NAME  . ':### VERB ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
         $verbClause = $this->buildVerbClause($sqlRequest); 
-        Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### VERB SQL-> ##', [$verbClause] );
+        Log::channel('stderr')->info($this->SHORT_NAME  . ':### VERB SQL-> ##', [$verbClause] );
 
 		$Response = [];
 
@@ -102,34 +102,34 @@ class FieldsEncryptedIndexQueryBuilder {
 			}
 
 	
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### JOIN ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### JOIN ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$joinClause = $this->buildJoinClause($sqlRequest); 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### JOIN SQL-> ##', [$joinClause] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### JOIN SQL-> ##', [$joinClause] );
 
 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### ORDER ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### ORDER ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$orderClause = $this->buildOrderClause($sqlRequest); 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### ORDER SQL-> ##', [$orderClause] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### ORDER SQL-> ##', [$orderClause] );
 
 
 			// LIMIT TODO TODO TODO 
 
 			$sqlStatement = $verbClause . " " . $fieldsClause['SQL'] . " " . $fromTableClause . " " . $joinClause . " " . $whereClause . " " . $orderClause;
 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:FINAL STATEMENT:', [$sqlStatement ] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':FINAL STATEMENT:', [$sqlStatement ] );
 
 		}
 
 		elseif ($verbClause === "INSERT")
 		{
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### 2 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### 2 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$fromTableClause = $this->buildFromTableClause($sqlRequest, " INTO "); 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### FROM TABLE SQL-> ##', [$fromTableClause] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### FROM TABLE SQL-> ##', [$fromTableClause] );
 
 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### INSERT CLAUSE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### INSERT CLAUSE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$insertClause = $this->buildInsertClause($sqlRequest); 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### INSERT CLAUSE SQL-> ##', [$insertClause] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### INSERT CLAUSE SQL-> ##', [$insertClause] );
 
 			$sqlStatement = $verbClause . " " . " " . $fromTableClause . " " . $insertClause['SQL'] ;
 
@@ -138,9 +138,9 @@ class FieldsEncryptedIndexQueryBuilder {
 
 		elseif ($verbClause === "REINDEX")
 		{
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### 3 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### 3 FROM ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$fromTableClause = $this->buildFromTableClause($sqlRequest, ""); 
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### FROM TABLE SQL-> ##', [$fromTableClause] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### FROM TABLE SQL-> ##', [$fromTableClause] );
 
 			$Response['tableNameToReindex'] = $fromTableClause;
 
@@ -151,18 +151,77 @@ class FieldsEncryptedIndexQueryBuilder {
 			$Response['fiels2decrypt'] = $fieldsClause['fiels2decrypt'];
 
 			// $Response['fiels2decrypt'] = $fieldsClause['fiels2decrypt'];
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### FIELDS SQL ####', [$fieldsClause] );
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:### WHERE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### FIELDS SQL ####', [$fieldsClause] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### WHERE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 
 
-			$sqlStatement = $verbClause . " " . " " . $fromTableClause . " " . $fieldsClause['SQL'] ;
+			// $sqlStatement = $verbClause . " " . " " . $fromTableClause . " " . $fieldsClause['SQL'] ;
 
 			// dd($Response);
 
-			// $sqlStatement = $verbClause . " " . " " . $fromTableClause . " " . $insertClause['SQL'] ;
+			$sqlStatement = $verbClause . " " . " " . $fromTableClause . " " . $fieldsClause['SQL'] ;
 
 			// $Response['EncrypedIndexedToReindex'] = $insertClause['EncrypedIndexedToReindex'];
 		}
+
+		elseif ($verbClause === "UPDATE")
+		{
+
+			// // UPDATE `laravel`.`migrations` SET `migration`='Tom Sam Jhon q', `batch`='80253' WHERE  `id`=10;
+			// Verificare se la query esegue più di un elemento
+			// Cifrare la query
+			// Elencare tutti i campi per aggiornare l'eventuale indice
+
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### 1 UPDATE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			$fromTableClause = $this->buildFromTableClause($sqlRequest, " "); 
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### FROM TABLE SQL-> ##', [$fromTableClause] );
+
+			if ( array_key_exists('where', $sqlRequest) ) 
+			{
+				try
+				{
+					Log::channel('stderr')->info($this->SHORT_NAME  . ':where clause:', [$sqlRequest] );
+					Log::channel('stderr')->info($this->SHORT_NAME  . ':where clause:', [$sqlRequest['where'][0]] );
+					$whereClause = " WHERE " . $this->buildWhereClause($sqlRequest['where'][0]);
+					Log::channel('stderr')->info($this->SHORT_NAME  . '# WHERE COND SQL #', [$whereClause] );
+
+				} 
+				catch (FieldsEncryptedIndexException $e) 
+				{
+					Log::channel('stderr')->error('FieldsEncryptedIndexQueryBuilder:Exception:', [$e->getMessage()] );
+					die();
+				}
+			} 
+			else 
+			{
+				throw new FieldsEncryptedIndexException("UPDATE where condition do not exists");
+			}
+
+			// Chech if query is on multiple rows via CONFIG
+
+			$dataInfo = $this->FEI_config->storageCountRow($fromTableClause , $whereClause);
+
+			if (  $dataInfo['rowCount'] !== 1)
+			{
+				Log::channel('stderr')->error('FieldsEncryptedIndexQueryBuilder:UPDATE SUPPORT 1 row only!:', [] );
+				throw new FieldsEncryptedIndexException("UPDATE SUPPORT 1 row only!");
+			} 
+			
+			// dd($dataInfo);
+
+			$fieldsUpdateClause = $this->buildUpdateClause($sqlRequest); 
+
+			$Response['EncrypedIndexedFiels2Update'] = $fieldsUpdateClause['EncrypedIndexedFiels2Update']; 
+			$Response['rowId'] = $dataInfo['rowId'];
+
+			$sqlStatement = $verbClause . " " .  $fromTableClause  . " " . $fieldsUpdateClause['SQL'] . " " .  $whereClause;
+
+			// dd($sqlStatement);
+
+			// dd($fieldsUpdateClause);
+
+		}
+
 
 		else
 
@@ -565,7 +624,12 @@ class FieldsEncryptedIndexQueryBuilder {
 				
 				$idList = implode("," , $r);
 
-				// dd(implode("," , $r));
+				// dd($idList);
+
+				if($idList === "")
+				{
+					$idList = "-1";
+				}
 				
 				// Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldClause:FEI_service', [$r] );
 				
@@ -593,7 +657,7 @@ class FieldsEncryptedIndexQueryBuilder {
 		// Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: joinTable:', [array_key_exists('fields', $r['order'][0])] );
 
 		if (    is_array($r) 
-				&& array_key_exists('data', $r) 
+				&& array_key_exists('fields', $r) 
 				)
 		{
 			$INSERT_CLAUSE_UP = "";
@@ -601,7 +665,7 @@ class FieldsEncryptedIndexQueryBuilder {
 			$EncrypedIndexedFiels2Update = [];
 
 			// $sortOrder = $r['order'][0]['sortOrder'];
-			Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause:', [$r['data']] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause:', [$r['fields']] );
 
 			// if (!in_array($sortOrder, ["ASC", "DESC"]))
 			// {
@@ -612,7 +676,7 @@ class FieldsEncryptedIndexQueryBuilder {
 			$tableName = $this->buildFromTableClause($r, ''); // get table name from request
 
 
-			foreach ($r['data'] as $index => $item) 
+			foreach ($r['fields'] as $index => $item) 
             {
                 Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: fieldName:', [$item['fieldName']] );
 
@@ -697,7 +761,113 @@ class FieldsEncryptedIndexQueryBuilder {
 
 	}
 
+	function buildUpdateClause(array $r) {
 
+		//  UPDATE `laravel`.`migrations` SET `migration`='Tom Sam Jhon q', `batch`='80253' WHERE  `id`=10;
+
+		Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause:', [is_array($r)] );
+		// Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: joinTable:', [array_key_exists('order', $r)] );
+		// Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: joinTable:', [array_key_exists('sortOrder', $r['order'][0])] );
+		// Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: joinTable:', [array_key_exists('fields', $r['order'][0])] );
+
+		if (  is_array($r) && array_key_exists('fields', $r) )
+		{
+			$UPDATE_CLAUSE = "";
+			$EncrypedIndexedFiels2Update = [];
+
+			// $sortOrder = $r['order'][0]['sortOrder'];
+			Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause:', [$r['fields']] );
+
+			// if (!in_array($sortOrder, ["ASC", "DESC"]))
+			// {
+			//	Log::channel('stderr')->error('buildOrderClause: sort not valid!:', [$sortOrder] );
+			//	die();
+			//}
+
+			$tableName = $this->buildFromTableClause($r, ''); // get table name from request
+
+
+			foreach ($r['fields'] as $index => $item) 
+            {
+                Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause: fieldName:', [$item['fieldName']] );
+
+				// check field's type return value only if exists
+				// $ft = $this->getFieldTypeDefinition($item['fieldName']);
+				$ft = $this->FEI_config->getFieldTypeDefinition($item['fieldName']);
+
+
+				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause: fieldType to check:', [$ft] );
+
+				
+				// ($INSERT_CLAUSE_UP === "") ? "pass" : "Fail";
+				$fn =  $item['fieldName'];
+
+				$UPDATE_CLAUSE = ($UPDATE_CLAUSE === "") ? $fn : $UPDATE_CLAUSE . " , " . $fn ;
+
+
+				if (in_array($ft, ["LONG"])) 
+				{
+					$UPDATE_CLAUSE = $UPDATE_CLAUSE . " = " . $item['fieldValue'] ;
+				}
+				elseif (in_array($ft, ["STRING"])) 
+				{
+					$UPDATE_CLAUSE = $UPDATE_CLAUSE . " = '" . addslashes($item['fieldValue']) . "'" ;
+				} 
+				elseif (in_array($ft, ["ENCRYPTED"]))
+				{
+					$plainValue = $item['fieldValue'];
+
+					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [ $plainValue ] );
+					
+					// $value = FieldsEncryptedIndexEncrypter::encrypt( $plainValue );
+					$value = $this->FEI_encrypter->encrypt_sodium($item);
+					// $value = FieldsEncryptedIndexEncrypter::encrypt($o['value']);
+					Log::channel('stderr')->debug($this->SHORT_NAME  . '[getFieldClause:', [$value]);
+					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [$value] );
+					// Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [FieldsEncryptedIndexEncrypter::encrypt( $plainValue )] );
+					
+					$UPDATE_CLAUSE = $UPDATE_CLAUSE . " = '" . $value . "'" ;
+
+				}
+				elseif (in_array($ft, ["ENCRYPTED_INDEXED"]))
+				{
+					// $value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+
+					$value = $this->FEI_encrypter->encrypt_sodium($item);
+					$UPDATE_CLAUSE = $UPDATE_CLAUSE . " = '" . $value . "'" ;
+
+					$EncrypedIndexedFiels2Update[] = [
+						"tableName" => $tableName,
+						"fieldName" => $item['fieldName'],
+						"fieldValue" => $item['fieldValue'],
+					];
+				}
+				else
+				{
+					Log::channel('stderr')->error('buildInsertClause: fieldType NOT FOUND!', [$ft] );
+					die();
+				}
+
+				
+			}
+
+			$r = [
+				"SQL" =>  " SET  " .  $UPDATE_CLAUSE,
+				"EncrypedIndexedFiels2Update" => $EncrypedIndexedFiels2Update
+			];
+
+			Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: !RETURN!:', [$r] );
+
+			return $r;
+
+		}
+		else
+		{
+			Log::channel('stderr')->error('buildInsertClause: return void - failded test!', [] );
+			return "";
+		}
+
+	}
 
 /*
 

@@ -225,6 +225,70 @@ class FieldsEncryptedIndexQueryRunner {
 
 		}
 
+
+
+		elseif ($verbClause === "UPDATE") 
+		{
+			Log::channel('stderr')->info('FEIQR!runQuery:UPDATE', [$q] );
+			$sqlStatement = $q['sqlStatement'];
+
+			Log::channel('stderr')->info('FEIQR!runQuery:EXEC', [$sqlStatement] );
+
+			// dd($q);
+
+			DB::statement($sqlStatement);
+
+			// Last Inserted Ids ...
+			// https://www.larashout.com/laravel-8-get-last-id-of-an-inserted-model
+
+			// $lastInsertId = DB::getPdo()->lastInsertId();
+
+			// Log::channel('stderr')->info('FEIQR!runQuery:ID', [$lastInsertId] );
+
+			// INSERIMENTO DI TUTTE LE CHIAVI SUL DATABASE
+			
+			// CHECK ID Long and > 0
+			// $this->checkLastInsertedId($lastInsertId);
+
+			// REMOVE OLD KEYS
+
+			if (array_key_exists('EncrypedIndexedFiels2Update', $q))
+			{
+
+				Log::channel('stderr')->info('FEIQR!runQuery:UPDATE INDEK KEYS ', [] );
+				
+				$EncrypedIndexedFiels2Update = $q['EncrypedIndexedFiels2Update'];
+
+				$rowId = $q['rowId'];
+
+				foreach ($EncrypedIndexedFiels2Update  as $item ) 
+				{
+	
+					Log::channel('stderr')->info('FEIQR!runQuery:UPDATE INDEX ', [$item] );
+				
+					// split name
+
+					$pieces = explode(".", $item['fieldName']);
+					$tname = $pieces[0];
+					$fname = $pieces[1];
+
+					Log::channel('stderr')->info('FEIQR!runQuery:UPDATE:FEI_del ', [$item['tableName'], $fname, $rowId] );
+					$this->FEI_service->FEI_del($item['tableName'], $fname, $rowId);
+
+					Log::channel('stderr')->info('FEIQR!runQuery:UPDATE:FEI_set ', [$item['tableName'], $fname,  $item['fieldValue'], $rowId] );
+					$this->FEI_service->FEI_set($item['tableName'], $fname,  $item['fieldValue'], $rowId);
+
+					// $this->FEI_service->FEI_del($item['tableName'], $fname,  $item['fieldValue'], $rowId);
+					// $this->FEI_service->FEI_set($item['tableName'], $fname,  $item['fieldValue'], $rowId);
+	
+				}
+			}
+
+			Log::channel('stderr')->info('FEIQR!runQuery:INSERT', ['---OK---'] );
+
+		}
+
+
 		elseif ($verbClause === "REINDEX")
 		{
 

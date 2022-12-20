@@ -57,7 +57,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 								"tableAlias" : "migrations"
 							}
 						],
-					"data" : [
+					"fields" : [
 							{  
 								"fieldName": "migrations.migration",   
 								"fieldValue" : "' . $rMigrationName . '"
@@ -324,7 +324,8 @@ class FieldsEncryptedIndexTestCommand extends Command
 				}
 
 
-				$toSearch = "QUQUQUQQUQUQUQ";
+				// Percentuale di errore
+				// $toSearch = "QUQUQUQQUQUQUQ";
 
 
 				// +++++ TO REMOVE ++++
@@ -480,6 +481,125 @@ class FieldsEncryptedIndexTestCommand extends Command
 			$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
 			$q = $this->FEI_engine->process($jsonRequest);
 			Log::channel('stderr')->info('FINAL!:', [$q] );
+
+
+
+		}
+
+
+		elseif ( $action == "updateMigrationsEncrypted" ) {
+
+			// UPDATE `laravel`.`migrations` SET `migration`='Tom Sam Jhon q', `batch`='80253' WHERE  `id`=10;
+
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $rows, [$action] );
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $fieldName, [$action] );
+
+			for($i = 0; $i<$rows; $i++)
+			{
+				Log::channel('stderr')->debug('**********************************************************************:' . $i, [$action] );
+				Log::channel('stderr')->debug('FieldsEncryptedIndexTestCommand:' . $i, [$action] );
+				
+				$faker = Faker::create('SeedData');
+
+				// get a random id from all ids
+				$Ids = DB::table('migrations')->select('id')->get();
+				$cntIds = count($Ids);
+				$idSelected = $faker->numberBetween(1, $cntIds);
+
+				// dd ( $Ids[$idSelected-1] );
+				// $val = intval($total_results->getText());
+				// dd ( intval($Ids[$idSelected-1]->id)   );
+				// $v = DB::table('migrations')->where('id', intval($Ids[$idSelected-1]->id) )->get();
+				// dd($v[0]);
+
+				// create JSON request
+				$rNumber = $faker->randomNumber(5, true);
+				$rMigrationName = $faker->name();
+				$rSentence = $faker->sentence();
+				$rName = $faker->words(3, true);
+				$rSurname = $faker->words(3, true);
+
+				// get di tre caratteri
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:SEARCH:', [$toSearch,$fieldName, $textFromSearch] );
+
+				$jsonRequest = '{
+					"action" : "UPDATE",
+					"tables" : [
+							{
+								"tableName" : "migrations",
+								"tableAlias" : "migrations"
+							}
+						  ],
+						
+					"fields" : [
+							{  
+								"fieldName" : "migrations.migration",
+								"fieldValue" : "' . $rName . '"  
+							},
+							{  
+								"fieldName" : "migrations.batch",
+								"fieldValue" : ' . $rNumber . '  
+							},
+							{  
+								"fieldName" : "migrations.description",
+								"fieldValue" : "' . $rSurname . '"  
+							},
+							{  
+								"fieldName" : "migrations.description_plain",
+								"fieldValue" : "' . $rSurname . '"  
+							},
+							{  
+								"fieldName" : "migrations.name",
+								"fieldValue" : "' . $rName . '"  
+							},
+							{  
+								"fieldName" : "migrations.name_plain",
+								"fieldValue" : "' . $rName . '"  
+							},
+							{  
+								"fieldName" : "migrations.surname",
+								"fieldValue" : "' . $rName . '"  
+							},
+							{  
+								"fieldName" : "migrations.surname_plain",
+								"fieldValue" : "' . $rName . '"  
+							}
+						
+					],
+
+					"where" : [
+            
+						{
+							"operator" : "",
+							"clauses" : [
+								{
+									"fieldName" : "migrations.id",
+									"operator" : "=",
+									"fieldValue" : ' . $idSelected . '
+								}
+							]
+						}
+					]
+
+								
+			
+
+						}';
+
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $toSearch, $jsonRequest] );
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $toSearch, $jsonRequest] );
+				
+				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+				$q = $this->FEI_engine->process($jsonRequest);
+				
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:Conteggio n. rec:', [ count($q), count($test1) ] );
+				
+	
+				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand[' . $i . '] ' . $action . ' :FINAL!:', [] );
+				
+				// recupero seconda lista ids
+		
+			} 
 
 
 

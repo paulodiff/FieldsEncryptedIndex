@@ -16,6 +16,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 
+
+use Illuminate\Support\Facades\Cache;
+
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter;
 
 // class RainbowTableService implements RainbowTableServiceInterface
@@ -298,6 +301,7 @@ class FieldsEncryptedIndexService
         }
 
         Log::channel('stderr')->debug('FEIS!setToStorage!', [$tname, $tag, $key, $value] );
+
         DB::table($tname)->insertOrIgnore([
             [
                 // 'rt_tag' => $tag,
@@ -336,6 +340,7 @@ class FieldsEncryptedIndexService
     function setupStorage($tag)
     {
 
+
 		if (config('FieldsEncryptedIndex.prefix'))
 		{
 			$prefix = config('FieldsEncryptedIndex.prefix');
@@ -352,28 +357,42 @@ class FieldsEncryptedIndexService
 		if (config('FieldsEncryptedIndex.encrypt'))
 		{
 			$tname = FieldsEncryptedIndexEncrypter::hash_md5($tname);
+		}      
+
+      	
+		$cacheKey = 'setupStorage:' . $tname;
+
+		// $value = Cache::store('file')->get('foo');
+
+		if ( Cache::store('file')->has($cacheKey) )
+		{
+			Log::channel('stderr')->debug('FEIS!setupStorage!CACHE', [$tname] );
+			return $tname;
+		} 
+		else 
+		{
+			
+			if ( !Schema::hasTable($tname)) {
+
+				Log::channel('stderr')->debug('FEIS!setupStorage!CREATE TABLE', [$tname] );
+			
+				Schema::create($tname, function(Blueprint $table)
+				{
+					// $table->increments('id');
+					// $table->string('rt_tag');
+					$table->text('rt_key');
+					$table->bigInteger('rt_value');
+					// $table->unique(['rt_tag','rt_key','rt_value']);
+					// $table->index(['rt_tag','rt_value']);
+				});
+
+			}
+
+			// Cache::store('redis')->put('bar', 'baz', 600); // 10 Minutes
+
+			Cache::store('file')->put($cacheKey, true, 600); // 10 Minutes
+			return $tname;
 		}
-
-      
-
-      Log::channel('stderr')->debug('FEIS!setupStorage!', [$tname] );
-
-      if ( !Schema::hasTable($tname)) {
-        Log::channel('stderr')->debug('FEIS!setupStorage!CREATE TABLE', [$tname] );
-
-        
-		Schema::create($tname, function(Blueprint $table)
-        {
-            // $table->increments('id');
-            // $table->string('rt_tag');
-            $table->text('rt_key');
-            $table->bigInteger('rt_value');
-            // $table->unique(['rt_tag','rt_key','rt_value']);
-            // $table->index(['rt_tag','rt_value']);
-        });
-
-      }
-      return $tname;
 
     }
 
@@ -392,9 +411,8 @@ class FieldsEncryptedIndexService
 	// --------------------------------------------------------------------------------------------------------------
 
 
-
 	// Salva i valori dell'indice ...
-	function FEI_set($tableName, $fieldName, $fieldValue, $value)
+	function FEI_set_old($tableName, $fieldName, $fieldValue, $value)
 	{
 		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tableName, $fieldName, $fieldValue, $value] );
 
@@ -416,6 +434,70 @@ class FieldsEncryptedIndexService
 		    // $rtService->setRT($item['tag'],$item['key'],$item['value']);
 		}
 
+		
+
+		// crea i token
+		// rimuove gli spazi
+		// rimuove i duplicati
+		// inserisce
+
+	}
+
+
+
+
+	// Salva i valori dell'indice ...
+	function FEI_set($tableName, $fieldName, $fieldValue, $value)
+	{
+		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tableName, $fieldName, $fieldValue, $value] );
+
+
+		// $data = self::rtiSanitize($fValue, $fSafeChars, $fTransform);
+
+		// Tokenize ... su
+		// $keyList = $this->feiTokenize($fieldValue, $fMinTokenLen);
+		$keyList = $this->feiTokenize($fieldValue, 3);
+
+		// TODO function makeTag TAG!
+		$tag = $tableName . ":" . $fieldName;
+
+		$dataList = [];
+
+		foreach( $keyList as $tokenValue )
+		{
+
+			$dataList[] = [
+				// 'rt_tag' => $tag,
+				'rt_key' => $tokenValue,
+				'rt_value' => $value,
+			];
+
+			
+			// $this->setToStorage($tag, $tokenValue, $value);
+		    
+		}
+
+		// check i table exists
+		$tname = $this->setupStorage($tag);
+     
+		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tname] );
+
+		// dd($dataList);
+
+		DB::table($tname)->insertOrIgnore(	$dataList );
+
+		// return $tname . ":" . $key . ":" . $value;
+
+		Log::channel('stderr')->debug('FEIS!FEI_set:DONE!', [$tname, count($dataList)] );
+
+		/*
+		DB::table('users')->insertOrIgnore([
+			['id' => 1, 'email' => 'sisko@example.com'],
+			['id' => 2, 'email' => 'archer@example.com'],
+		]);
+		*/
+
+		// dd('STOP : FEI_set');
 		
 
 		// crea i token
@@ -454,6 +536,17 @@ class FieldsEncryptedIndexService
 
 	}
 
+	// ELIMINA LA VOCE DALL'INDICE opportuno
+	public function FEI_del($tableName, $fieldName, $index)
+    {
+        Log::channel('stderr')->debug('FEIS!FEI_del:', [$tableName, $fieldName, $index] );
+		// TODO function makeTag TAG!
+		$tag = $tableName . ":" . $fieldName;
+
+        $this->deleteFromStorage($tag, $index);
+        return true;
+    }
+
 
 	// DROP DELL'INDICE
 	function FEI_drop($tableName, $fieldName)
@@ -465,7 +558,6 @@ class FieldsEncryptedIndexService
 
         $r = $this->resetIndexFromStorage($tag);
         // print_r($pieces);
-
         
         return true;
 

@@ -10,8 +10,11 @@ namespace Paulodiff\FieldsEncryptedIndex;
 
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+
+use Illuminate\Support\Facades\Cache;
 
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter;
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexService;
@@ -312,7 +315,8 @@ class FieldsEncryptedIndexConfig {
 
 		if( is_null($tableArrayConfig)) 
 		{
-			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:retunArrayFromJson ERROR - !', [ $j] );    
+			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:returnArrayFromJson ERROR - !', [ $j] );  
+			print_r($j);  
 			throw new FieldsEncryptedIndexException('FieldsEncryptedIndexConfig:retunArrayFromJson JSON parse error');
 		}
 
@@ -381,6 +385,39 @@ class FieldsEncryptedIndexConfig {
 		}
 	}
 
+	// STORAGE UTILITIES access to DATABASE
+
+	public function storageCountRow($tableName , $whereClause)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:storageCountRow', [ $tableName, $whereClause ] );
+
+		$tableName = trim($tableName);
+
+		// get primaryKey
+
+		$pkName = $this->getTablePrimaryKey($tableName);
+
+		$sqlStatement = "SELECT " .  $pkName . " FROM " . $tableName . "  " . $whereClause;
+
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:storageCountRow', [ $sqlStatement ] );
+
+		$rs = DB::select( DB::raw($sqlStatement) );
+
+
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:storageCountRow', [ count($rs) ] );
+
+		/*
+			$Ids = DB::table('migrations')->select('id')->get();
+			$cntIds = count($Ids);
+			$idSelected = $faker->numberBetween(1, $cntIds);
+		*/
+
+		return [
+			'rowId' => $rs[0]->{$pkName},
+			'rowCount' => count($rs)
+		];
+
+	}
 	
 
 }

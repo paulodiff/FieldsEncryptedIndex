@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
+
+use Illuminate\Support\Facades\Cache;
+
 use Paulodiff\FieldsEncryptedIndex\Tests\TestCase;
 
 class ParseSQLCommandTest extends TestCase
@@ -25,40 +28,52 @@ class ParseSQLCommandTest extends TestCase
         Artisan::call($cmd);
 		*/
 
-		
 		/*
-		$cmd = 'FieldsEncryptedIndex:test insertMigrations 1';
+		
+		$cmd = 'FieldsEncryptedIndex:test insertMigrations 10';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 		*/
+		
 
 		/*
 		$cmd = 'FieldsEncryptedIndex:test reindexMigrations 0';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 		*/
-		
-		
-		/*		
+		Cache::store('file')->flush();
+
 				
-		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncrypted 5 name';
+	
+		$cmd = 'FieldsEncryptedIndex:test updateMigrationsEncrypted 50';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+        Artisan::call($cmd);
+
+		/*
+
+		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncrypted 5 description';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
 		
+		
+		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncryptedIndex 50 name';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+        Artisan::call($cmd);
 
-		*/
-		
-		
-		
-		
 		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncryptedIndex 50 surname';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
 
-		
+		*/
 		
 
-		
+
+		/*
+		$cmd = 'FieldsEncryptedIndex:test updateMigrationsEncryptedIndex 50 surname';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+        Artisan::call($cmd);
+		*/
+
 		
 				
 
