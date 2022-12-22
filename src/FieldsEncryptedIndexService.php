@@ -38,6 +38,7 @@ class FieldsEncryptedIndexService
         $this->STRING_SEPARATOR = ";";
         Log::channel('stderr')->debug('FEIS!MIN_TOKEN_SIZE', [$this->MIN_TOKEN_SIZE] );
         Log::channel('stderr')->debug('FEIS!STRING_SEPARATOR', [$this->STRING_SEPARATOR] );
+		$this->FEI_encrypter = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter();
     }
 
 
@@ -335,30 +336,23 @@ class FieldsEncryptedIndexService
     }
 
 
-	// Controlla che eista la tabella per contenere l'indice
-	// $tag deve essere nella forma TABLENAME:FIELDNAME
+	
+	/**
+     * Inizializza l'encrypted Index
+     *
+     * @param string $tag string, deve essere nella forma tableName.fieldName
+ 	 *
+     * @return string ritorna il nome dell'indice creato o sul quale effettuare le richieste
+     *             
+     */
     function setupStorage($tag)
     {
-
-
-		if (config('FieldsEncryptedIndex.prefix'))
-		{
-			$prefix = config('FieldsEncryptedIndex.prefix');
-		}
-		else 
-		{
-			die('FieldsEncryptedIndexService:setupStorage prefix not set!');
-		}
-
-		$tname = $this->slugify($prefix . "-" . $tag);
+		
+		Log::channel('stderr')->debug('FEIS!setupStorage!', [$tag] );
+		
+		$tname = $this->FEI_encrypter->short_hash_sodium($tag);
 
 		Log::channel('stderr')->debug('FEIS!setupStorage!', [$tname] );
-		
-		if (config('FieldsEncryptedIndex.encrypt'))
-		{
-			$tname = FieldsEncryptedIndexEncrypter::hash_md5($tname);
-		}      
-
       	
 		$cacheKey = 'setupStorage:' . $tname;
 
@@ -380,6 +374,7 @@ class FieldsEncryptedIndexService
 				{
 					// $table->increments('id');
 					// $table->string('rt_tag');
+					$table->increments('id');
 					$table->text('rt_key');
 					$table->bigInteger('rt_value');
 					// $table->unique(['rt_tag','rt_key','rt_value']);

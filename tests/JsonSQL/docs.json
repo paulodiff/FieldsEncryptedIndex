@@ -1,0 +1,22 @@
+{
+	"tableName": "docs",
+	"primaryKey": "id",
+	"fields": [
+		{
+			"fieldName": "description",
+			"fieldType": "STRING"
+		},
+		{
+			"fieldName": "batchNumber",
+			"fieldType": "LONG"
+		},
+		{
+			"fieldName": "note",
+			"fieldType": "ENCRYPTED"
+		},
+		{
+			"fieldName": "address",
+			"fieldType": "ENCRYPTED_INDEXED"
+		}
+	]
+}

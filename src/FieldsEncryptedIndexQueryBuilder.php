@@ -222,6 +222,66 @@ class FieldsEncryptedIndexQueryBuilder {
 
 		}
 
+		elseif ($verbClause === "CREATETABLE")
+		{
+
+	
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### 1 CREATETABLE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+		
+
+			$tableName = $this->createGetTableName($sqlRequest);
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### TABLE ##', [$tableName] );
+
+		
+			$configTable=[];
+			$configTable['tableName'] = $sqlRequest['tableName'];
+			$configTable['primaryKey'] = $sqlRequest['primaryKey'];
+			$configTable['fields'] = $sqlRequest['fields'];
+
+			// dd($configTable);
+
+			// TODO Crea il file  .json 
+			
+			$options = [];
+			// **************************** $this->FEI_config->saveConfig($configTable, $tableName, $options);
+			
+			$fks = [];
+			foreach ($configTable['fields'] as $item) 
+            {
+				if ( in_array($item['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]) )
+				{
+					$fks[] =[
+						'fieldName' => $item['fieldName'],
+						'key' => $this->FEI_encrypter->keygen_sodium(),
+						'nonce' => $this->FEI_encrypter->noncegen_sodium()
+					];
+				}
+			}
+		
+			$SECconfigTable=[];
+			$SECconfigTable['tableName'] = $sqlRequest['tableName'];
+			$SECconfigTable['key'] = $this->FEI_encrypter->keygen_short_hash_sodium();
+			$SECconfigTable['fieldsKeys'] = $fks;
+
+			// ***************************** $this->FEI_config->saveSecurityConfig($SECconfigTable, $tableName, $options);
+
+			// dd($SECconfigTable);
+
+
+			$createTableClause = $this->buildCreateTableClause($sqlRequest);
+
+			dd($createTableClause);
+			
+			
+
+
+			dd('STOP');
+
+
+
+
+		}
+
 
 		else
 
@@ -252,7 +312,7 @@ class FieldsEncryptedIndexQueryBuilder {
 			$verb = $r['action'];
 			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildVerbClause: :', [$verb] );
 
-			if (!in_array($verb, ["SELECT", "UPDATE", "INSERT", "REINDEX"]))
+			if (!in_array($verb, ["SELECT", "UPDATE", "INSERT", "REINDEX", "CREATETABLE"]))
 			{
 				Log::channel('stderr')->error('buildVerbClause: verb not valid!:', [$verb] );
 				die();
@@ -284,15 +344,17 @@ class FieldsEncryptedIndexQueryBuilder {
                 
 				// $tc  = $this->getTableConfig($item['tableName']);
 				// solo per verificare l'esistenza della configurazione della tabella
-				$tc  = $this->FEI_config->getTableConfig($item['tableName']);
+			    // $tc  = $this->FEI_config->getTableConfig($item['tableName']);
                 
 				if ( $SQL == "") 
 				{
-					$SQL = $cmd . $item['tableName'];
+					$tableNameHashed = $this->FEI_encrypter->short_hash_sodium($item['tableName'] . ".###TABLE_NAME###");
+					$SQL = $cmd . $tableNameHashed;
 				}
 				else 
 				{
-					$SQL = $SQL . " , " . $item['tableName'];
+					$tableNameHashed = $this->FEI_encrypter->short_hash_sodium($item['tableName'] . ".###TABLE_NAME###");
+					$SQL = $SQL . " , " . $tableNameHashed;
 				}
 			
             }
@@ -647,7 +709,7 @@ class FieldsEncryptedIndexQueryBuilder {
     }
 
 
-	function buildInsertClause(array $r) {
+	function buildInsertClause(array $r, $tableName) {
 
 		// INSERT INTO `laravel`.`migrations` (`migration`) VALUES ('qqqqqqqqqq');
 
@@ -673,8 +735,10 @@ class FieldsEncryptedIndexQueryBuilder {
 			//	die();
 			//}
 
-			$tableName = $this->buildFromTableClause($r, ''); // get table name from request
+			// $tableName = $this->buildFromTableClause($r, ''); // get table name from request
+			$tableNameHashed = $tableName;
 
+			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildInsertClause: tableName:', [$tableName . ".###TABLE_NAME###", $tableNameHashed] );
 
 			foreach ($r['fields'] as $index => $item) 
             {
@@ -687,10 +751,13 @@ class FieldsEncryptedIndexQueryBuilder {
 
 				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: fieldType to check:', [$ft] );
 
+				$fieldNameHashed = $this->FEI_encrypter->short_hash_sodium($item['fieldName']);
+
+				// dd($fieldNameHashed);
 				
 				// ($INSERT_CLAUSE_UP === "") ? "pass" : "Fail";
 
-				$INSERT_CLAUSE_UP = ($INSERT_CLAUSE_UP === "") ? $item['fieldName'] : $INSERT_CLAUSE_UP . "," . $item['fieldName'] ;
+				$INSERT_CLAUSE_UP = ($INSERT_CLAUSE_UP === "") ? $fieldNameHashed : $INSERT_CLAUSE_UP . "," . $fieldNameHashed ;
 
 
 				if (in_array($ft, ["LONG"])) 
@@ -699,7 +766,7 @@ class FieldsEncryptedIndexQueryBuilder {
 				}
 				elseif (in_array($ft, ["STRING"])) 
 				{
-					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $item['fieldValue'] . "'" : $INSERT_CLAUSE_DN . ",'" . addslashes($item['fieldValue']) ."'" ;
+					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . addslashes($item['fieldValue']) . "'" : $INSERT_CLAUSE_DN . ",'" . addslashes($item['fieldValue']) ."'" ;
 				} 
 				elseif (in_array($ft, ["ENCRYPTED"]))
 				{
@@ -869,236 +936,137 @@ class FieldsEncryptedIndexQueryBuilder {
 
 	}
 
-/*
-
-	// test config
-	public function checkConfig()
+	function buildCreateTableClause(array $r)
 	{
-		Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:checkConfig', [ config('FieldsEncryptedIndex.configFolder') ] );    
-	}
+		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [is_array($r)] );
 
 
-	public function getConfigFileName($tn)
-	{
-		return config('FieldsEncryptedIndex.configFolder') . $tn . ".json";
-	}
+		$CREATE_CLAUSE = " CREATE TABLE ";
 
-	public function existsConfigFileName($fn)
-	{
-		Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:existsConfigFileName', [ $fn ] );    
-		return file_exists($fn);
-	}
+		$tableNameHashed = $this->FEI_encrypter->short_hash_sodium($r['tableName'] . ".###TABLE_NAME###");
+		$primaryKeyName = $r['primaryKey'];
+		$primaryKeySqlDefs = " INT(11) NOT NULL AUTO_INCREMENT ";
 
-	public function loadConfig($tn)
-	{
-		Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexConfig:loadConfig', [ $tn ] );    
-		$cfn = $this->getConfigFileName($tn);
-
-		if ($this->existsConfigFileName($cfn))
-		{
-			$jsonTableConfig = file_get_contents($cfn);
-			$tableArrayConfig = json_decode($jsonTableConfig, true);
-			$Validator = Validator::make($tableArrayConfig, $this->tableRules);
-			if ($Validator->fails()) {
-				Log::channel('stderr')->error('Table config check error!', [$Validator->errors()] );
-			}
-			return $tableArrayConfig;
-		}
-		else
-		{
-			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:loadConfig ERROR - Config file does not exists!', [ $cfn] );    
-			die('');
-		}
-	}
+		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [$tableNameHashed] );
+		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [$primaryKeyName] );
 
 
-	// load config from file in memory
-	public function getTableConfig($tn)
-    {
-        Log::channel('stderr')->debug($this->SHORT_NAME  . 'getTableConfig:', [$tn] );
+		$fieldClauses = [];
 
-		$gct = $this->loadConfig($tn);
-	
-		Log::channel('stderr')->debug($this->SHORT_NAME  . 'getTableConfig:', [$gct] );
-	
-        return $gct;
-    }
-
-    public function getFieldTypeDefinition($fn)
-    {
-        // Log::channel('stderr')->info($this->SHORT_NAME  . 'getFieldTypeDefinition:', [$fn] );
-        // check fieldName in query in table config amd type
-        $pieces = explode(".", $fn);
-        $tname = $pieces[0];
-        $fname = $pieces[1];
-        
-        Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldTypeDefinition:', [$fn, $tname, $fname] );
-
-        $gc = $this->getTableConfig($tname);
-
-		Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldTypeDefinition:', [$gc] );
-
-        if ( array_search($fname, array_column($gc['fields'], 'fieldName') ) === false ) 
+		foreach ($r['fields'] as $item) 
         {
-            Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldTypeDefinition:NOT FOUND!', [$tname, $fname, array_search($fname, array_column($gc['fields'], 'fieldName') )] );
-            die();
-        } 
-        else 
-        {
-            $key = array_search($fname, array_column($gc['fields'], 'fieldName') );
-            // Log::channel('stderr')->info($this->SHORT_NAME  . 'FOUND!', [$tname, $fname, array_search($fname, array_column($GLOBAL_TABLE_CONFIG[$tname]['fields'], 'fieldName') )] );
-
-			// Log::channel('stderr')->info($this->SHORT_NAME  . 'getFieldTypeDefinition:return ', [$key] );
-
-            $fiedlType = $gc['fields'][$key]['fieldType'];
-            // Log::channel('stderr')->info($this->SHORT_NAME  . 'FOUND!', [$tname, $fname, $GLOBAL_TABLE_CONFIG[$tname]['fields'][$key]['fieldType']] );
-
-			// Log::channel('stderr')->info($this->SHORT_NAME  . 'getFieldTypeDefinition:return ', [$fiedlType] );
-
-            return $fiedlType;
-        }
-    }
-
-    public function getFieldClause($o)
-    {
-        
-        $ft = $this->getFieldTypeDefinition($o['fieldName']);
-        Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldClause:', [$ft] );
-
-        if (in_array($ft, ["LONG", "STRING"])) 
-        {
-            return  " " . $o['fieldName'] . " " . $o['operator'] . " " . $o['value'] . " ";
-        } 
-        elseif (in_array($ft, ["ENCRYPTED"]))
-        {
-            return  " " . $o['fieldName'] . " " . $o['operator'] . " !ENC! " . $o['value'] . " ";
-        }
-        elseif (in_array($ft, ["ENCRYPTED_INDEXED"]))
-        {
-            return  " { " . $o['fieldName'] . " !ENC_INDEX! IN VALUES (AAAAA,BBBBB) } ";
-        }
-        else
-        {
-            Log::channel('stderr')->error('fieldType NOT FOUND!', [$ft] );
-            die();
-        }
-
-    }
-
-
-	public function loadFakeRequestAndValidate($tn)
-	{
-		Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexConfig:loadFakeRequest', [ $tn ] );    
-		
-		$cfn = $this->getConfigFileName($tn);
-
-		if ($this->existsConfigFileName($cfn))
-		{
-			$jsonTableConfig = file_get_contents($cfn);
-			$tableArrayConfig = json_decode($jsonTableConfig, true);
-			$Validator = Validator::make($tableArrayConfig, $this->sqlRequestRules);
-			if ($Validator->fails()) {
-				Log::channel('stderr')->error('Fake request config check error!', [$Validator->errors()] );
-			}
-			return $tableArrayConfig;
-		}
-		else
-		{
-			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:loadFakeRequestAndValidate ERROR - Config file does not exists!', [ $cfn] );    
-			die('');
-		}
-	}
-
-	*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /**
-     * @param array|\Closure|string $column
-     * @param null $operator
-     * @param null $value
-     * @param string $boolean
-     * @return Builder
-     * @throws \Exception
-     *
-    public function where($column, $operator = null, $value = null, $boolean = 'and')
-    {
-        Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>>DATI>>>>', [$column, $operator, $value, $boolean] );
-        Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>>RAINBOW CONFIG>>>>', [$this->enc_fields] );
-
-        // controllo se il campo è in configurazione e di che tipo
-
-        if(!is_string($column)) 
-        {
-            Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>>>>>>>> NO STRING returm immediatly SIMPLE ----->', [$column, $operator] );
-            return parent::where($column, $operator, $value, $boolean);
-        }
-
-        // check type
-
-        $tName = $this->enc_fields['table']['tableName']; 
-        $primaryKey = $this->enc_fields['table']['primaryKey'];  
-        $fName = ""; $fType = "";
-        foreach ($this->enc_fields['fields'] as $key => $val) 
-        {
-            // print_r($key);
-            // print_r($val);
-            if($val['fName'] == $column)
-            {
-                $fName = $column; $fType = $val['fType'];
-                Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>> RAINBOW Field found in enc config!->', [$fName, $fType] );
-            }
-        }
-
-        // se il campo deve utilizzare una RainbowTable
-        if ( is_string($column) && ($operator == 'LIKE') && ($fName !== "") && ($fType == 'ENCRYPTED_FULL_TEXT') )
-        {
-            Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>> RAINBOW Table --GO! ENCRYPTED_FULL_TEXT ->', [$column, $operator, $tName, $primaryKey, $fType] );
-            // accesso alla rainbow table per ottenere i valori da mettere nella query tramite ServiceProvider
-            $tag = $tName . ":" . $column;
-            $r = $this->rtService->getRT($tag, $value);
-            Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>> RAINBOW Table --DATA!->', [$tag, $r] );
-            return self::whereIn( $primaryKey , $r );
-            // return self::whereRaw("CONVERT(AES_DECRYPT(FROM_BASE64(`{$filter->field}`), '{$salt}') USING utf8mb4) {$filter->operation} ? ", [$filter->value]);
-        }
-        elseif ( is_string($column) && ($fName !== "") && ($fType == 'ENCRYPTED') )
-        {
-            Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>>ENCRYPTED ----->', [$column, $operator, $value] );
-            $operator = FieldsEncryptedIndexEncrypter::encrypt($operator);
-            Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>>ENCRYPTED ----->', [$column, $operator, $value] );
-            return parent::where($column, $operator, $value, $boolean);
-        }
-        else
-        // il campo può essere cifrato o meno ....
-        {
-            Log::channel('stderr')->debug($this->SHORT_NAME  . 'FieldsEncryptedIndexQueryBuilder:>>>>>>>>> SIMPLE ----->', [$column, $operator] );
-            return parent::where($column, $operator, $value, $boolean);
-        }
-
             
-    }
+			$fieldClause = [];
+			$sqlFielddefs = "";
 
-    public function likeEncrypted($param1, $param2, $param3 = null)
-    {
-      $filter            = new \stdClass();
-      $filter->field     = $param1;
-      $filter->operation = isset($param3) ? $param2 : '=';
-      $filter->value     = isset($param3) ? $param3 : $param2;
+			$fieldNameWithTable = $r['tableName'] . "." . $item['fieldName'];
+			$fieldNameHashed = $this->FEI_encrypter->short_hash_sodium($fieldNameWithTable);
+			
 
-      // $salt = substr(hash('sha256', config('laravelDatabaseEncryption.encrypt_key')), 0, 16);
+			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [$fieldNameWithTable] );
+			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [$fieldNameHashed] );
+			
+			if (in_array($item['fieldType'], ["LONG"])) 
+			{
+				$sqlFielddefs = 'BIGINT(20) NULL DEFAULT NULL' ;
+			}
+			elseif (in_array($item['fieldType'], ["STRING", "ENCRYPTED", "ENCRYPTED_INDEXED"])) 
+			{
+				$sqlFielddefs = 'LONGTEXT NULL DEFAULT NULL' ;
+			} 
+			else
+			{
+				Log::channel('stderr')->error('buildCreateTableClause: fieldType NOT FOUND!', [$ft] );
+				die();
+			}
+			
+			$fieldClauses[] = $fieldNameHashed  . " " . $sqlFielddefs;
 
-      return self::whereRaw("CONVERT(AES_DECRYPT(FROM_BASE64(`{$filter->field}`), '{$salt}') USING utf8mb4) {$filter->operation} ? ", [$filter->value]);
-    }
+		}
 
+		// dd($fieldClauses);
+
+		$CREATE_CLAUSE = $CREATE_CLAUSE . " " . $tableNameHashed;
+		$CREATE_CLAUSE = $CREATE_CLAUSE . " ( " . $primaryKeyName . " " . $primaryKeySqlDefs;
+
+		foreach( $fieldClauses as $sqlField)
+		{
+
+			$CREATE_CLAUSE = $CREATE_CLAUSE . " , " . $sqlField;
+
+		}
+
+		$CREATE_CLAUSE = $CREATE_CLAUSE . ", PRIMARY KEY (" . $primaryKeyName . ")  ) ";
+
+		dd($CREATE_CLAUSE);
+
+// TODO .keys e crea la tabella nel database
+
+			// SQL CREATE TABLE
+
+			/*
+			CREATE TABLE `raccomandate_source` (
+			`id` INT(11) NOT NULL AUTO_INCREMENT,
+			`raccomandate_ts` DATETIME NULL DEFAULT NULL,
+			`raccomandate_data_reg` DATETIME NOT NULL,
+			`raccomandate_numero` VARCHAR(255) NOT NULL,
+			`raccomandate_mittente` VARCHAR(255) NOT NULL,
+			`raccomandate_note` VARCHAR(255) NULL DEFAULT NULL,
+			`raccomandate_operatore` VARCHAR(255) NOT NULL,
+			`createdAt` DATETIME NOT NULL,
+			`updatedAt` DATETIME NOT NULL,
+			`deletedAt` DATETIME NULL DEFAULT NULL,
+			`raccomandate_destinatario_codice` INT(11) NULL DEFAULT NULL,
+			`80f112f9a800cfad18f1f68af66b2fb89fbe2f548547a61cc1fef4afc1d48c1c` INT(11) NULL DEFAULT NULL,
+			INDEX `Indice 1` (`raccomandate_mittente`),
+			INDEX `id` (`id`),
+			INDEX `Indice 3` (`raccomandate_data_reg`)
+
+			CREATE TABLE `migrations` (
+	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+	`migration` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`batch` INT(11) NULL DEFAULT NULL,
+	`description` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`description_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`name` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`name_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`surname` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`surname_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+	`ts` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (`id`)
+)
+
+			*/
+
+
+
+		dd($r);
+
+	}
+
+	/*
+	
+	
+		CREATE TABLE
+	
+	
 	*/
+
+	// ritorna il nome della tabella plain and hash
+	function createGetTableName(array $r) 
+	{
+		if (  is_array($r) && array_key_exists('tableName', $r) )
+		{
+			return  $r['tableName'];
+		}
+		else 
+		{
+			Log::channel('stderr')->error('createGetTableName: CREATE tableName not valid!', [] );
+			throw new FieldsEncryptedIndexException("CREATE tableName not valid");			
+		}
+	}
+
+
+
+
 }

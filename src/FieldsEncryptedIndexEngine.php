@@ -65,10 +65,10 @@ class FieldsEncryptedIndexEngine {
 		Log::channel('stderr')->info('FieldsEncryptedIndexEngine:process', [$aR] );
 		
 		$q = $this->FEI_sql_query_builder->buildQuery($aR);
-		Log::channel('stderr')->info('process:parseSQL:FINAL!:', [$q] );
+		Log::channel('stderr')->notice('process:parseSQL:FINAL!:', [$q] );
 		
 		$r = $this->FEI_sql_query_runner->runQuery($q);
-		Log::channel('stderr')->info('process:runSQL:FINAL!:', [$r] );
+		Log::channel('stderr')->notice('process:runSQL:FINAL!:', [$r] );
 
 		// "SELECT" recuperare i dati e decodifica ... order by ecc.
 

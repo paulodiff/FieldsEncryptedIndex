@@ -63,18 +63,30 @@ class FieldsEncryptedIndexEncrypter
     }
 
     
+
+	/**
+     * Cifra un valore con la libreria PHP SODIUM ricavando la key e nonce dal file di configurazione
+     *
+     * @param array $s parametro
+	 * @var $s[fiedlName]  string, il nome del campo da codificare nel formato "tableName.fieldName"
+ 	 * @var $s[fieldValue] string, il valore da codificare
+ 	 *
+     * @return string la codifica di $[fiedlValue]
+     *             
+     */
+
     public function encrypt_sodium($s)
     {
 		Log::channel('stderr')->debug('encrypt_sodium', [$s] );   
 
-		$sc = $this->FEI_config->getSecurityConfig($s['fieldName']);
+		$sc = $this->FEI_config->getFieldSecurityConfig($s['fieldName']);
 
 		// dd($sc);
 
         // $k = self::getKey($s['fie']);
         // $nonce = self::getNonce($o);
-        $enc_result = sodium_crypto_secretbox( $s['fieldValue'], hex2bin($sc['nonce']), hex2bin($sc['key']));
-        $encoded = bin2hex( $enc_result );
+        $enc_result = sodium_crypto_secretbox( $s['fieldValue'], sodium_hex2bin($sc['nonce']), sodium_hex2bin($sc['key']));
+        $encoded = sodium_bin2hex( $enc_result );
         sodium_memzero($sc['nonce']);
         sodium_memzero($sc['key']);
         return $encoded;
@@ -86,12 +98,12 @@ class FieldsEncryptedIndexEncrypter
 
 		Log::channel('stderr')->debug('decrypt_sodium', [$s] );   
 
-		$sc = $this->FEI_config->getSecurityConfig($s['fieldName']);
+		$sc = $this->FEI_config->getFieldSecurityConfig($s['fieldName']);
 
         // $k = self::getKey();
         // $nonce = self::getNonce();
-        $decoded = hex2bin($s['fieldValue']);
-        $o = sodium_crypto_secretbox_open($decoded, hex2bin($sc['nonce']), hex2bin($sc['key']) );
+        $decoded = sodium_hex2bin($s['fieldValue']);
+        $o = sodium_crypto_secretbox_open($decoded, sodium_hex2bin($sc['nonce']), sodium_hex2bin($sc['key']) );
         // $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
         // $encrypted_result = mb_substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit');
         // $o = sodium_crypto_secretbox_open($encrypted_result, $nonce, $k);
@@ -101,32 +113,94 @@ class FieldsEncryptedIndexEncrypter
         return $o;
     }
 
-    public function hash_sodium($s)
+
+  
+	/**
+     * Ricava il short_hash di un fieldName
+     *
+     * @param string $s string, il nome del campo da codificare nel formato "tableName.fieldName"
+ 	 *
+     * @return string lo short hash di $s
+     *             
+     */
+    public  function hash_sodium($s)
     {
-        return sodium_bin2hex(sodium_crypto_generichash($s));
+
+		die('DO NOT USE! : hash_sodium');
+        
+		Log::channel('stderr')->debug('hash_sodium', [$s] );   
+
+		$sc = $this->FEI_config->getTableSecurityConfig($s);
+		
+		// dd($sc);
+
+		Log::channel('stderr')->debug('hash_sodium:key', [$sc] );
+		Log::channel('stderr')->debug('hash_sodium:val', [$s] );
+
+		$o = sodium_crypto_generichash($s, sodium_hex2bin($sc));
+		
+		sodium_memzero($sc);
+        // sodium_memzero($sc['key']);
+        return 'r' . sodium_bin2hex($o);
     }
+
+	public function keygen_sodium()
+	{
+
+	// Generate a secret key. This value must be stored securely.
+		return sodium_bin2hex(sodium_crypto_aead_xchacha20poly1305_ietf_keygen());
+	}
+
+	public function noncegen_sodium()
+	{
+		return  sodium_bin2hex(\random_bytes(\SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES));
+	}
+	
+	public function keygen_hash_sodium()
+	{
+		die('DO NOT USE : keygen_hash_sodium');
+		return sodium_bin2hex(sodium_crypto_generichash_keygen());
+	}
 
   
 
-    public  function short_hash($s)
+	public function keygen_short_hash_sodium()
+	{
+		return sodium_bin2hex(sodium_crypto_shorthash_keygen());
+	}
+
+
+/**
+     * Ricava il short_hash di un fieldName
+     *
+     * @param string $s string, il nome del campo da codificare nel formato "tableName.fieldName" 
+	 *                          viene usata per compatibilità solo la parte tableName
+ 	 *
+     * @return string lo short hash di $s
+     *             
+     */
+    public  function short_hash_sodium($s)
     {
-        return sodium_crypto_shorthash($s, self::getNonce());
+
+        
+		Log::channel('stderr')->debug('short_hash_sodium', [$s] );   
+
+		$sc = $this->FEI_config->getTableSecurityConfig($s);
+		
+		// dd($sc);
+
+		Log::channel('stderr')->debug('short_hash_sodium:key', [$sc] );
+		Log::channel('stderr')->debug('short_hash_sodium:val', [$s] );
+
+		// $o = sodium_crypto_generichash($s, sodium_hex2bin($sc));
+
+		$o = sodium_crypto_shorthash($s, sodium_hex2bin($sc));
+		
+		sodium_memzero($sc);
+        // sodium_memzero($sc['key']);
+        return 'r' . sodium_bin2hex($o);
     }
 
-    protected  function getKey($o)
-    {
-        // $key = config('rainbowtable.key');
-        // Log::debug('Encrypter:getKey ... from config', [$key] );
-        return  sodium_base642bin(config('FieldsEncryptedIndex.key') , SODIUM_BASE64_VARIANT_ORIGINAL);
-    }
-
-    protected  function getNonce($o)
-    {
-        // $nonce = config('rainbowtable.nonce');
-        // Log::debug('Encrypter:getNonce ... from config', [$nonce] );
-        return  sodium_base642bin(config('FieldsEncryptedIndex.nonce') , SODIUM_BASE64_VARIANT_ORIGINAL);
-    }
-    
-
+	
 
 }

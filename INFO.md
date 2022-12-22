@@ -169,9 +169,6 @@ Enum products_status {
 
 
 
-
-
-
 -- Parse della richiesta
 -- Creazione della query
 
@@ -247,6 +244,13 @@ TODO ESCAPE VALUES
                 }
 
 
+
+TODO 
+
+
+Separare la logica hashed con quella in chiaro per la richiesta nelle configurazioni
+
+Aggiungere un getHashedTableName per eliminare ###TABLE.NAME### nella generazione dell'HASH
 
 
 

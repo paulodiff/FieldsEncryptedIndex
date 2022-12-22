@@ -22,18 +22,36 @@ class ParseSQLCommandTest extends TestCase
         // }
         // $this->assertFalse(File::exists(config_path('blogpackage.php')));
         
-		/*	
+		Cache::store('file')->flush();
+
+/*
+		
 		$cmd = 'FieldsEncryptedIndex:test encryption 1';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
-		*/
 
-		/*
-		
-		$cmd = 'FieldsEncryptedIndex:test insertMigrations 10';
+*/		
+
+
+/*		
+		$cmd = 'FieldsEncryptedIndex:test createTable 0';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
-		*/
+*/		
+
+
+		
+		$cmd = 'FieldsEncryptedIndex:test insertDocs 1';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+		Artisan::call($cmd);
+		
+
+		
+/*		
+		$cmd = 'FieldsEncryptedIndex:test insertMigrations 500';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+		Artisan::call($cmd);
+*/		
 		
 
 		/*
@@ -41,31 +59,33 @@ class ParseSQLCommandTest extends TestCase
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 		*/
-		Cache::store('file')->flush();
 
-				
-	
-		$cmd = 'FieldsEncryptedIndex:test updateMigrationsEncrypted 50';
+		
+			
+/*		
+		$cmd = 'FieldsEncryptedIndex:test updateMigrationsEncrypted 500';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
+*/		
 
-		/*
-
+		
+/*
 		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncrypted 5 description';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
-		
-		
-		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncryptedIndex 50 name';
+*/		
+
+/*
+		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncryptedIndex 100 name';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
 
-		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncryptedIndex 50 surname';
+
+		$cmd = 'FieldsEncryptedIndex:test selectMigrationsEncryptedIndex 100 surname';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
         Artisan::call($cmd);
-
-		*/
-		
+*/
+			
 
 
 		/*

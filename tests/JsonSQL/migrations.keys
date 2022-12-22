@@ -1,5 +1,7 @@
 {
 	"tableName"  : "migrations",
+	"key" : "ecde429dfbcc1734366ee0dbe0eac7a8d4fac7f1cf1a09cfa345d6d3908da1dc",
+	"nonce" : "7d4ccacbcc51d97e4dc0dd305dc34bc718d0e5638e3d9c9a",
     "fieldsKeys" : [
                 {
                     "fieldName" : "description",
@@ -16,7 +18,5 @@
                     "key" : "3b818b41bbbf10662bf3c7b2ad20611d6616f3088cfd93747f6f60552db82552",
 					"nonce" : "b4cc013ef902688951a122b78e4d84bd260967d3c4ad6065"
                 }
-
-
-            ]
+    ]
 }

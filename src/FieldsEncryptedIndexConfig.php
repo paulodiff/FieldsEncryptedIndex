@@ -179,7 +179,25 @@ class FieldsEncryptedIndexConfig {
 		}
 	}
 
-	
+	public function saveConfig($arrayConfig, $tableName, $op)
+	{
+
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:saveConfig', [ $tableName ] );    
+		$cfn = $this->getConfigFileName($tableName);
+
+		if (!$this->existsConfigFileName($cfn) || array_key_exists('force', $op) )
+		{
+			$jsonData = json_encode($arrayConfig);
+			file_put_contents($cfn, $jsonData);
+			return 'saved!';
+		}
+		else
+		{
+			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:saveConfig ERROR - Config file already exists!', [ $cfn] );    
+			die('');
+		}
+
+	}
 
 
 
@@ -332,9 +350,9 @@ class FieldsEncryptedIndexConfig {
 	// SECUTITY CONFIG UTILS 
 	// LOAD table.keys
 
-	public function getSecurityConfig($fn)
+	public function getFieldSecurityConfig($fn)
 	{
-		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getSecurityConfig', [ $fn ] ); 
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getFieldSecurityConfig', [ $fn ] ); 
 		$pieces = explode(".", $fn);
         $tname = $pieces[0];
         $fname = $pieces[1];
@@ -355,6 +373,33 @@ class FieldsEncryptedIndexConfig {
 		die('Security Error key/nonce not found in : ' . $fn);
 
 	}
+
+	public function getTableSecurityConfig($fn)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getTableSecurityConfig', [ $fn ] ); 
+		$pieces = explode(".", $fn);
+        $tname = $pieces[0];
+        $fname = $pieces[1];
+	
+		$tc = $this->loadSecurityConfig($tname);
+
+		/*
+		"tableName" 
+		"key" : 
+		"nonce" : 
+		*/
+
+		if ( array_key_exists('key', $tc) )
+		{
+			return $tc['key'];
+		}
+
+		
+		die('Security Error Table key not found in : ' . $fn);
+
+	}
+
+
 
 	public function getSecurityConfigFileName($tn)
 	{
@@ -384,6 +429,28 @@ class FieldsEncryptedIndexConfig {
 			die('');
 		}
 	}
+
+	public function saveSecurityConfig($arrayConfig, $tableName, $op)
+	{
+
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:saveSecurityConfig', [ $tableName ] );    
+		$cfn = $this->getSecurityConfigFileName($tableName);
+
+		if (!$this->existsConfigFileName($cfn) || array_key_exists('force', $op) )
+		{
+			$jsonData = json_encode($arrayConfig);
+			file_put_contents($cfn, $jsonData);
+			return 'saved!';
+		}
+		else
+		{
+			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:saveSecurityConfig ERROR - Config file already exists!', [ $cfn] );    
+			die('');
+		}
+
+	}
+
+
 
 	// STORAGE UTILITIES access to DATABASE
 
