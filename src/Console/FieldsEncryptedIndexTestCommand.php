@@ -1,7 +1,8 @@
 <?php
 namespace Paulodiff\FieldsEncryptedIndex\Console;
 
-// Test FieldsEncryptedIndex ...
+// Implementa il comando php artisan command
+// 'FieldsEncryptedIndex:test {action} {rows} {fieldName?}'
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
@@ -30,7 +31,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 		$rows = $this->argument('rows');
 		$fieldName = $this->argument('fieldName');
 		
-		Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:test:', [$action, $rows] );
+		Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:test:', [$action, $rows, $fieldName] );
 
 
 // esegue $rows inserimenti nella tabella migrations ...
@@ -53,12 +54,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 				$jsonRequest = '{
 					"action"    : "INSERT",
-					"tables" : [
-							{
-								"tableName" : "docs",
-								"tableAlias" : "docs"
-							}
-						],
+					"tableName" : "docs",
 					"fields" : [
 							{  
 								"fieldName": "docs.description",   

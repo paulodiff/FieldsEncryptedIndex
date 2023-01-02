@@ -1,5 +1,10 @@
 <?php
 
+// Unit che esegue gli artisan command
+// Esegue FieldsEncryptedIndex:test p1 p2 p3 con i vari parametri
+// 
+
+
 namespace Paulodiff\FieldsEncryptedIndex\Tests\Unit;
 
 use Illuminate\Support\Facades\Artisan;

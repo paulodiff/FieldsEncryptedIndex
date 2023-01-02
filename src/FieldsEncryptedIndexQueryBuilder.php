@@ -235,6 +235,10 @@ class FieldsEncryptedIndexQueryBuilder {
 		
 			$configTable=[];
 			$configTable['tableName'] = $sqlRequest['tableName'];
+			$configTable['tableNameHashed'] = $this->FEI_encrypter->short_hash_sodium(
+				$configTable['tableName'],
+				$this->FEI_encrypter->keygen_short_hash_sodium()
+			);
 			$configTable['primaryKey'] = $sqlRequest['primaryKey'];
 			$configTable['fields'] = $sqlRequest['fields'];
 
@@ -242,41 +246,52 @@ class FieldsEncryptedIndexQueryBuilder {
 
 			// TODO Crea il file  .json 
 			
-			$options = [];
-			// **************************** $this->FEI_config->saveConfig($configTable, $tableName, $options);
 			
-			$fks = [];
-			foreach ($configTable['fields'] as $item) 
+			// $fks = [];
+			foreach ($configTable['fields'] as $key=>$val) 
             {
-				if ( in_array($item['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]) )
+				// $configTable['fields'][$item];
+				
+
+				$configTable['fields'][$key]['fieldNameHashed'] = $this->FEI_encrypter->short_hash_sodium(
+					$configTable['fields'][$key]['fieldName'],
+					$this->FEI_encrypter->keygen_short_hash_sodium()
+				);
+
+				if ( in_array($configTable['fields'][$key]['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]) )
 				{
-					$fks[] =[
-						'fieldName' => $item['fieldName'],
-						'key' => $this->FEI_encrypter->keygen_sodium(),
-						'nonce' => $this->FEI_encrypter->noncegen_sodium()
-					];
+
+					$configTable['fields'][$key]['key'] = $this->FEI_encrypter->keygen_sodium();
+					$configTable['fields'][$key]['nonce'] = $this->FEI_encrypter->noncegen_sodium();
+
 				}
 			}
 		
-			$SECconfigTable=[];
-			$SECconfigTable['tableName'] = $sqlRequest['tableName'];
-			$SECconfigTable['key'] = $this->FEI_encrypter->keygen_short_hash_sodium();
-			$SECconfigTable['fieldsKeys'] = $fks;
 
+			// dd($configTable);
+
+			$options = [
+				'force' => true
+			];
+			$this->FEI_config->saveConfig($configTable, $tableName, $options);
+			
+
+			// $SECconfigTable=[];
+			// $SECconfigTable['tableName'] = $sqlRequest['tableName'];
+			//$SECconfigTable['key'] = $this->FEI_encrypter->keygen_short_hash_sodium();
+			//$SECconfigTable['fieldsKeys'] = $fks;
+
+			// NON NECESSARIA TUTTI LE CONFIGURAZIONI dati e sicurezza sono nel .json
 			// ***************************** $this->FEI_config->saveSecurityConfig($SECconfigTable, $tableName, $options);
 
-			// dd($SECconfigTable);
-
+			
 
 			$createTableClause = $this->buildCreateTableClause($sqlRequest);
 
-			dd($createTableClause);
-			
-			
+			// dd($createTableClause);
+						
 
-
-			dd('STOP');
-
+			$sqlStatement = $createTableClause;
 
 
 
@@ -333,7 +348,19 @@ class FieldsEncryptedIndexQueryBuilder {
 
 		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildFromTableClause:', [is_array($r)] );
 
+		// se esiste tableName ritona altrimenti	
 		
+
+		if ( array_key_exists('tableName', $r) 	)
+		{
+
+			$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['tableName']);
+			$SQL = $cmd . $tableNameHashed;
+			return $SQL;
+
+		}
+
+
         if($r['tables'])
         {
 			$SQL = "";
@@ -709,7 +736,7 @@ class FieldsEncryptedIndexQueryBuilder {
     }
 
 
-	function buildInsertClause(array $r, $tableName) {
+	function buildInsertClause(array $r) {
 
 		// INSERT INTO `laravel`.`migrations` (`migration`) VALUES ('qqqqqqqqqq');
 
@@ -736,9 +763,11 @@ class FieldsEncryptedIndexQueryBuilder {
 			//}
 
 			// $tableName = $this->buildFromTableClause($r, ''); // get table name from request
-			$tableNameHashed = $tableName;
+			// $tableNameHashed = $tableName;
 
-			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildInsertClause: tableName:', [$tableName . ".###TABLE_NAME###", $tableNameHashed] );
+			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildInsertClause: tableName:', [$r['tableName']] );
+
+			$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['tableName']);
 
 			foreach ($r['fields'] as $index => $item) 
             {
@@ -746,12 +775,12 @@ class FieldsEncryptedIndexQueryBuilder {
 
 				// check field's type return value only if exists
 				// $ft = $this->getFieldTypeDefinition($item['fieldName']);
-				$ft = $this->FEI_config->getFieldTypeDefinition($item['fieldName']);
-
+				$fc = $this->FEI_config->getFieldConfig($item['fieldName']);
+				$ft = $fc['fieldType'];
 
 				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: fieldType to check:', [$ft] );
 
-				$fieldNameHashed = $this->FEI_encrypter->short_hash_sodium($item['fieldName']);
+				$fieldNameHashed = $fc['fieldNameHashed'];
 
 				// dd($fieldNameHashed);
 				
@@ -796,7 +825,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $value . "'" : $INSERT_CLAUSE_DN . ",'" . $value ."'";
 					$EncrypedIndexedFiels2Update[] = [
-						"tableName" => $tableName,
+						"tableName" => $r['tableName'],
 						"fieldName" => $item['fieldName'],
 						"fieldValue" => $item['fieldValue'],
 					];
@@ -816,6 +845,9 @@ class FieldsEncryptedIndexQueryBuilder {
 			];
 
 			Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: !RETURN!:', [$r] );
+
+
+			dd($r);
 
 			return $r;
 
@@ -943,8 +975,9 @@ class FieldsEncryptedIndexQueryBuilder {
 
 		$CREATE_CLAUSE = " CREATE TABLE ";
 
-		$tableNameHashed = $this->FEI_encrypter->short_hash_sodium($r['tableName'] . ".###TABLE_NAME###");
-		$primaryKeyName = $r['primaryKey'];
+		$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['tableName']);
+		$primaryKeyName = $this->FEI_config->getTablePrimaryKeyNameConfig($r['tableName']);
+
 		$primaryKeySqlDefs = " INT(11) NOT NULL AUTO_INCREMENT ";
 
 		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [$tableNameHashed] );
@@ -960,9 +993,8 @@ class FieldsEncryptedIndexQueryBuilder {
 			$sqlFielddefs = "";
 
 			$fieldNameWithTable = $r['tableName'] . "." . $item['fieldName'];
-			$fieldNameHashed = $this->FEI_encrypter->short_hash_sodium($fieldNameWithTable);
+			$fieldNameHashed = $this->FEI_config->getHashedFieldNameConfig($fieldNameWithTable);
 			
-
 			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [$fieldNameWithTable] );
 			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [$fieldNameHashed] );
 			
@@ -998,7 +1030,9 @@ class FieldsEncryptedIndexQueryBuilder {
 
 		$CREATE_CLAUSE = $CREATE_CLAUSE . ", PRIMARY KEY (" . $primaryKeyName . ")  ) ";
 
-		dd($CREATE_CLAUSE);
+		// dd($CREATE_CLAUSE);
+
+		return $CREATE_CLAUSE;
 
 // TODO .keys e crea la tabella nel database
 
@@ -1040,10 +1074,14 @@ class FieldsEncryptedIndexQueryBuilder {
 
 
 
-		dd($r);
+		// dd($r);
 
 	}
 
+
+
+
+	
 	/*
 	
 	

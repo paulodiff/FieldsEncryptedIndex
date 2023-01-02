@@ -361,6 +361,37 @@ class FieldsEncryptedIndexQueryRunner {
 
 		}
 
+		elseif ($verbClause === "CREATETABLE") 
+		{
+			Log::channel('stderr')->info('FEIQR!runQuery:CREATETABLE', [$q] );
+			$sqlStatement = $q['sqlStatement'];
+
+			Log::channel('stderr')->info('FEIQR!runQuery:EXEC', [$sqlStatement] );
+
+			// dd($q);
+
+			DB::statement($sqlStatement);
+
+			// Last Inserted Ids ...
+			// https://www.larashout.com/laravel-8-get-last-id-of-an-inserted-model
+
+			// $lastInsertId = DB::getPdo()->lastInsertId();
+
+			// Log::channel('stderr')->info('FEIQR!runQuery:ID', [$lastInsertId] );
+
+			// INSERIMENTO DI TUTTE LE CHIAVI SUL DATABASE
+			
+			// CHECK ID Long and > 0
+			// $this->checkLastInsertedId($lastInsertId);
+
+			// REMOVE OLD KEYS
+
+			
+			Log::channel('stderr')->info('FEIQR!runQuery:CREATETABLE', ['---OK---'] );
+
+		}
+
+
 		else
 		{
 			Log::channel('stderr')->error('FieldsEncryptedIndexQueryRunner verbClause invalid!', [$verbClause] ); 

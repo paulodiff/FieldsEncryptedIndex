@@ -175,30 +175,35 @@ class FieldsEncryptedIndexEncrypter
      *
      * @param string $s string, il nome del campo da codificare nel formato "tableName.fieldName" 
 	 *                          viene usata per compatibilità solo la parte tableName
+	 * 
+	 * @param string $k key, la chiave per la generazione dell'hash
+	 * 
  	 *
      * @return string lo short hash di $s
      *             
      */
-    public  function short_hash_sodium($s)
-    {
 
+    public function short_hash_sodium($s, $k)
+    {
         
 		Log::channel('stderr')->debug('short_hash_sodium', [$s] );   
 
-		$sc = $this->FEI_config->getTableSecurityConfig($s);
+		// $sc = $this->FEI_config->getTableSecurityConfig($s);
 		
 		// dd($sc);
 
-		Log::channel('stderr')->debug('short_hash_sodium:key', [$sc] );
-		Log::channel('stderr')->debug('short_hash_sodium:val', [$s] );
+		// Log::channel('stderr')->debug('short_hash_sodium:key', [$sc] );
+		// Log::channel('stderr')->debug('short_hash_sodium:val', [$s] );
 
 		// $o = sodium_crypto_generichash($s, sodium_hex2bin($sc));
 
-		$o = sodium_crypto_shorthash($s, sodium_hex2bin($sc));
+		// $o = sodium_crypto_shorthash($s, sodium_hex2bin($sc));
+		$o = sodium_crypto_shorthash($s, sodium_hex2bin($k));
 		
-		sodium_memzero($sc);
+		sodium_memzero($k);
+
         // sodium_memzero($sc['key']);
-        return 'r' . sodium_bin2hex($o);
+        return sodium_bin2hex($o);
     }
 
 	

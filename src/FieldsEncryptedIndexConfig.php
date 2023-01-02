@@ -16,8 +16,6 @@ use Illuminate\Validation\Rule;
 
 use Illuminate\Support\Facades\Cache;
 
-use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter;
-use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexService;
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexException;
 
 class FieldsEncryptedIndexConfig {
@@ -109,32 +107,7 @@ class FieldsEncryptedIndexConfig {
 
             Log::channel('stderr')->info('checkEncryption:Encryption config driver:', [config('hashing.driver')] );
             
-            $s = 'test';
-
-            $h1 = FieldsEncryptedIndexEncrypter::encrypt($s);
-            $h2 = FieldsEncryptedIndexEncrypter::encrypt($s);
-
-            $cr1 = FieldsEncryptedIndexEncrypter::decrypt($h1);
-            $cr2 = FieldsEncryptedIndexEncrypter::decrypt($h2);
-
-            Log::channel('stderr')->info('CheckConfig:Encrypted:', [$h1] );
-            Log::channel('stderr')->info('CheckConfig:Encrypted:', [$h2] );
-            Log::channel('stderr')->info('CheckConfig:Decrypted:', [$cr1] );
-            Log::channel('stderr')->info('CheckConfig:Decrypted:', [$cr2] );
-            $hs1 = FieldsEncryptedIndexEncrypter::hash($s);
-            $hs2 = FieldsEncryptedIndexEncrypter::hash($s);
-            Log::channel('stderr')->info('CheckConfig:Hash:', [$hs1] );
-            Log::channel('stderr')->info('CheckConfig:Hash:', [$hs2] );
-
-            if ($h1 === $h2)
-            {
-                Log::channel('stderr')->info('WARNING SECURITY ALERT Encryption data is the SAME!!!!:', [] );
-            }
-
-            if ($hs1 <> $hs2)
-            {
-                Log::channel('stderr')->info('WARNING SECURITY ALERT HASH data is different!!!', [] );
-            }
+  
 
 
         } catch (\Exception $e) {
@@ -350,6 +323,90 @@ class FieldsEncryptedIndexConfig {
 	// SECUTITY CONFIG UTILS 
 	// LOAD table.keys
 
+
+	public function getHashedTableNameConfig($tn)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getHashedTableNameConfig', [ $tn ] ); 
+		
+		
+		$gct = $this->loadConfig($tn);
+	
+		Log::channel('stderr')->debug('getHashedTableNameConfig:', [$gct] );
+		
+		if ( array_key_exists('tableNameHashed', $gct) )
+		{
+			return $gct['tableNameHashed'];
+		}
+
+	
+		die('Security Error Table key not found in : ' . $tn);
+	        
+	}
+
+
+	public function getTablePrimaryKeyNameConfig($tn)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getTablePrimaryKeyNameConfig', [ $tn ] ); 
+		
+		
+		$gct = $this->loadConfig($tn);
+	
+		Log::channel('stderr')->debug('getTablePrimaryKeyNameConfig:', [$gct] );
+		
+		if ( array_key_exists('primaryKey', $gct) )
+		{
+			return $gct['primaryKey'];
+		}
+	
+		die('Error primaryKey not found in : ' . $tn);
+        
+	}
+
+	public function getHashedFieldNameConfig($fn)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getHashedFieldNameConfig', [ $fn ] ); 
+
+		$pieces = explode(".", $fn);
+        $tname = $pieces[0];
+        $fname = $pieces[1];
+
+		$sc = $this->loadConfig($tname);
+
+		foreach( $sc['fields'] as $item )
+		{
+			if ( $item['fieldName'] === $fname ) 
+			{
+				return $item['fieldNameHashed'];
+			}
+		}
+		
+		die('getHashedFieldNameConfig Error fieldNameHashed not found in : ' . $fn);
+
+	}
+
+	public function getFieldConfig($fn)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getFieldConfig', [ $fn ] ); 
+
+		$pieces = explode(".", $fn);
+        $tname = $pieces[0];
+        $fname = $pieces[1];
+
+		$sc = $this->loadConfig($tname);
+
+		foreach( $sc['fields'] as $item )
+		{
+			if ( $item['fieldName'] === $fname ) 
+			{
+				return $item;
+			}
+		}
+		
+		die('getHashedFieldNameConfig Error getFieldConfig not found in : ' . $fn);
+
+	}
+
+
 	public function getFieldSecurityConfig($fn)
 	{
 		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getFieldSecurityConfig', [ $fn ] ); 
@@ -357,9 +414,9 @@ class FieldsEncryptedIndexConfig {
         $tname = $pieces[0];
         $fname = $pieces[1];
 	
-		$sc = $this->loadSecurityConfig($tname);
+		$sc = $this->loadConfig($tname);
 
-		foreach( $sc['fieldsKeys'] as $item )
+		foreach( $sc['fields'] as $item )
 		{
 			if ( $item['fieldName'] === $fname ) 
 			{

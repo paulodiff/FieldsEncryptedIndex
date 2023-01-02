@@ -248,9 +248,20 @@ TODO ESCAPE VALUES
 TODO 
 
 
-Separare la logica hashed con quella in chiaro per la richiesta nelle configurazioni
+Integrare durante la creazione la generazione delle chiavi insieme 
+
+ la logica hashed con quella in chiaro per la richiesta nelle configurazioni
 
 Aggiungere un getHashedTableName per eliminare ###TABLE.NAME### nella generazione dell'HASH
+
+
+considerazioni sulla sicurezza
+
+CREATETABLE
+
+- dove serve hash - nella generazione di tableHash, fieldHash ... inizializzazione
+- chiave per la cifratura/decifratura ENCRYPTED
+- hash per i valori degli indici che si può mettere sul campo indice per rigenerare il valore
 
 
 
