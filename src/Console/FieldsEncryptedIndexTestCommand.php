@@ -331,17 +331,133 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 
 				if ( 
-				( $jq[0]['docs_description'] <> $jq[0]['docs_note'] ) ||
-				( $jq[0]['docs_description'] <> $jq[0]['docs_address'] ) ||
-				( $jq[0]['docs_note'] <> $jq[0]['docs_address'] ) ||
+				( $jq[0]->docs_description <> $jq[0]->docs_note ) ||
+				( $jq[0]->docs_description <> $jq[0]->docs_address ) ||
+				( $jq[0]->docs_note <> $jq[0]->docs_address )
 				) 
 				{
-					die('VERIFICA 1 FALLITA!')
+					die('VERIFICA 1 FALLITA!');
 				}
 
 
-
 				Log::channel('stderr')->notice('[[[[[VERIFICA 2 SELECT SU description SU NOTE SU ADDRESS stesso ID con valore intero]]]]', [$i] );
+				
+				$valueTofind = $jq[0]->docs_description;
+
+				$jsonRequest = '{
+					"action" : "SELECT",
+					"tables" : 
+						[
+							{
+								"tableName" : "docs",
+								"tableAlias" : "docs"
+							}
+						],
+						
+					"fields" : 
+						[
+							{  "fieldName": "docs.id"   }
+						],
+
+					"where" : 
+						[
+			
+							{
+								"operator" : "",
+								"clauses" : 
+								[
+									{
+										"fieldName" : "docs.description",
+										"operator" : "=",
+										"fieldValue" : "' . $valueTofind . '"
+									}
+								]
+							}
+						]
+						
+					}';
+
+				$q_description = $this->FEI_engine->process($jsonRequest);
+
+
+
+				$jsonRequest = '{
+					"action" : "SELECT",
+					"tables" : 
+						[
+							{
+								"tableName" : "docs",
+								"tableAlias" : "docs"
+							}
+						],
+						
+					"fields" : 
+						[
+							{  "fieldName": "docs.id"   }
+						],
+
+					"where" : 
+						[
+			
+							{
+								"operator" : "",
+								"clauses" : 
+								[
+									{
+										"fieldName" : "docs.note",
+										"operator" : "=",
+										"fieldValue" : "' . $valueTofind . '"
+									}
+								]
+							}
+						]
+						
+					}';
+
+				$q_note = $this->FEI_engine->process($jsonRequest);
+
+				$jsonRequest = '{
+					"action" : "SELECT",
+					"tables" : 
+						[
+							{
+								"tableName" : "docs",
+								"tableAlias" : "docs"
+							}
+						],
+						
+					"fields" : 
+						[
+							{  "fieldName": "docs.id"   }
+						],
+
+					"where" : 
+						[
+			
+							{
+								"operator" : "",
+								"clauses" : 
+								[
+									{
+										"fieldName" : "docs.address",
+										"operator" : "=",
+										"fieldValue" : "' . $valueTofind . '"
+									}
+								]
+							}
+						]
+						
+					}';
+
+				$q_address = $this->FEI_engine->process($jsonRequest);
+
+
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_description] );				
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_note] );				
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_address] );				
+				
+				
+				
 				Log::channel('stderr')->notice('[[[[[VERIFICA 3 LIKE su description e su address stesso valore]]]]', [$i] );
 
 				
