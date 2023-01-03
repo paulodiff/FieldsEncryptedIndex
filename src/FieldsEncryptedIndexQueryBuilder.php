@@ -404,15 +404,16 @@ class FieldsEncryptedIndexQueryBuilder {
 				// $tc  = $this->getTableConfig($item['tableName']);
 				// solo per verificare l'esistenza della configurazione della tabella
 			    // $tc  = $this->FEI_config->getTableConfig($item['tableName']);
-                
+				// $tableNameHashed = $this->FEI_encrypter->short_hash_sodium($item['tableName'] . ".###TABLE_NAME###");
+
+				$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($item['tableName']);
+
 				if ( $SQL == "") 
 				{
-					$tableNameHashed = $this->FEI_encrypter->short_hash_sodium($item['tableName'] . ".###TABLE_NAME###");
 					$SQL = $cmd . $tableNameHashed;
 				}
 				else 
 				{
-					$tableNameHashed = $this->FEI_encrypter->short_hash_sodium($item['tableName'] . ".###TABLE_NAME###");
 					$SQL = $SQL . " , " . $tableNameHashed;
 				}
 			
@@ -451,27 +452,48 @@ class FieldsEncryptedIndexQueryBuilder {
                 Log::channel('stderr')->info($this->SHORT_NAME  . 'buildFieldsClause:Search for 1', [$tname, $item['fieldName'] ] );
 
 				// $fiedlType = $this->getFieldTypeDefinition($item['fieldName']);
-				$fiedlType = $this->FEI_config->getFieldTypeDefinition($item['fieldName']);
+				$fc = $this->FEI_config->getFieldConfig($item['fieldName']);
+				$fieldType = $fc['fieldType'];
 
-				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildFieldsClause:Search for 2', [$tname, $fname, $fiedlType ] );
+				// $fieldType = $this->FEI_config->getFieldTypeDefinition($item['fieldName']);
 
-				 
-				if (in_array($fiedlType, ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
+				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildFieldsClause:Search for 2', [$tname, $fname, $fieldType ] );
+
+				 /*
+				if (in_array($fieldType, ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
 				{
 					$encryptedSelectFields[] = [
 						"tableName" => $tname,
+						"tableNameHashed" => $fc['tableNameHashed'],
 						"fieldName" => $fname,
-						"fieldType" => $fiedlType
+						"fieldNameHashed" => $fc['fieldNameHashed'],
+						"fieldType" => $fieldType
 					];
 				}
 				
+				*/
+				
+				$ALIAS = $tname . "_" . $fc['fieldName'];
+
+				$encryptedSelectFields[] = [
+					"tableName" => $tname,
+					"tableNameHashed" => $fc['tableNameHashed'],
+					"fieldName" => $fname,
+					"fieldNameAlias" => $ALIAS,
+					"fieldNameHashed" => $fc['fieldNameHashed'],
+					"fieldType" => $fieldType
+				];
+
+				
+				
+
 				if ( $SQL == "") 
 				{
-					$SQL = $item['fieldName'];
+					$SQL = $fc['fieldNameHashed'] . " AS " . $ALIAS ;
 				}
 				else 
 				{
-					$SQL = $SQL . "," . $item['fieldName'];
+					$SQL = $SQL . "," . $fc['fieldNameHashed'] . " AS " . $ALIAS;
 				}
 			
 
@@ -816,9 +838,9 @@ class FieldsEncryptedIndexQueryBuilder {
 			// $tableName = $this->buildFromTableClause($r, ''); // get table name from request
 			// $tableNameHashed = $tableName;
 
-			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildInsertClause: tableName:', [$r['tableName']] );
+			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildInsertClause: tableName:', [$r['table']] );
 
-			$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['tableName']);
+			$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['table']);
 
 			foreach ($r['fields'] as $index => $item) 
             {
@@ -878,7 +900,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 					$INSERT_CLAUSE_DN = ($INSERT_CLAUSE_DN === "") ? "'" . $value . "'" : $INSERT_CLAUSE_DN . ",'" . $value ."'";
 					$EncrypedIndexedFiels2Update[] = [
-						"tableName" => $r['tableName'],
+						"tableName" => $r['table'],
 						"fieldName" => $item['fieldName'],
 						"fieldValue" => $item['fieldValue'],
 					];

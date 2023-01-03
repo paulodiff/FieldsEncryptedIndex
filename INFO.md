@@ -270,6 +270,17 @@ CREATETABLE
 - nome key
 - nome value
 
+PER LA DECODIFICA ...
+
+SELECT 
+50b030ee3c1f80e1.id as F01,
+50b030ee3c1f80e1.d5bbd1ce4d3c2464 as F02,
+50b030ee3c1f80e1.07891b4c07fec5d4 as F03,
+50b030ee3c1f80e1.ff30c103ffd09ad7 as F04
+FROM 
+50b030ee3c1f80e1   
+WHERE 
+( 50b030ee3c1f80e1.id = 23 )
 
 
 

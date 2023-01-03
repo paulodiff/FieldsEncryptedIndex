@@ -201,6 +201,167 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 		}
 
+		// esegue select su docs sui vari campi per controllare la correttezza dei dati
+		// usa la process per fare le query
+		elseif ( $action == "selectDocs" ) {
+
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [] );
+
+			$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+
+			$jsonRequest = '{
+				"action" : "SELECT",
+				"tables" : 
+				    [
+						{
+							"tableName"  : "docs",
+							"tableAlias" : "docs"
+						}
+					],
+				"fields" : 
+				    [
+						{  "fieldName": "docs.id"   }
+					],
+				
+				"where" : 
+					[
+		
+						{
+							"operator" : "",
+							"clauses" : 
+							[
+								{
+									"fieldName" : "docs.id",
+									"operator" : ">",
+									"fieldValue" : "1"
+								}
+							]
+						}
+					]
+
+			}';
+			
+			$q = $this->FEI_engine->process($jsonRequest);
+
+
+			$Ids = json_decode($q);
+			
+			// die('selectDocs');
+
+			// per il numero di volte 
+			// - get id
+			//   get = LIKE ... 
+			/*
+			{
+				"fieldName": "description",
+				"fieldType": "STRING",
+			},
+			{
+				"fieldName": "note",
+				"fieldType": "ENCRYPTED",
+			},
+			{
+				"fieldName": "address",
+				"fieldType": "ENCRYPTED_INDEXED",
+			}
+			*/
+
+			for($i = 0; $i<$rows; $i++)
+			{
+
+				$faker = Faker::create('SeedData');
+				$cntIds = count($Ids);
+				$idSelected = $faker->numberBetween(1, $cntIds);
+
+
+				$ID_ = $Ids[$idSelected-1]->docs_id;
+
+				Log::channel('stderr')->debug('FieldsEncryptedIndexTestCommand: SELECT ' , [$ID_] );
+				
+				$rNumber = $faker->randomNumber(5, true);
+				$rMigrationName = $faker->name();
+				$rSentence = $faker->sentence();
+				$rName = $faker->words(3, true);
+				$rSurname = $faker->words(3, true);
+
+				$jsonRequest = '{
+					"action" : "SELECT",
+					"tables" : 
+						[
+							{
+								"tableName" : "docs",
+								"tableAlias" : "docs"
+							}
+						],
+						
+					"fields" : 
+						[
+							{  "fieldName": "docs.id"   },
+							{  "fieldName": "docs.description"   },
+							{  "fieldName": "docs.note"   },
+							{  "fieldName": "docs.address"   }
+						],
+
+					"where" : 
+						[
+			
+							{
+								"operator" : "",
+								"clauses" : 
+								[
+									{
+										"fieldName" : "docs.id",
+										"operator" : "=",
+										"fieldValue" : "' . $ID_ . '"
+									}
+								]
+							}
+						]
+						
+					}';
+
+				$q = $this->FEI_engine->process($jsonRequest);
+
+				$jq = json_decode($q);
+
+				// dd($jq[0]);
+
+				// VERIFICA 1 description == note == address
+				Log::channel('stderr')->notice('[[[[[VERIFICA 1 description == note == address]]]]', [$i] );
+
+
+				if ( 
+				( $jq[0]['docs_description'] <> $jq[0]['docs_note'] ) ||
+				( $jq[0]['docs_description'] <> $jq[0]['docs_address'] ) ||
+				( $jq[0]['docs_note'] <> $jq[0]['docs_address'] ) ||
+				) 
+				{
+					die('VERIFICA 1 FALLITA!')
+				}
+
+
+
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2 SELECT SU description SU NOTE SU ADDRESS stesso ID con valore intero]]]]', [$i] );
+				Log::channel('stderr')->notice('[[[[[VERIFICA 3 LIKE su description e su address stesso valore]]]]', [$i] );
+
+				
+							
+			
+
+			} 
+
+		} 
+
+
+
+
+
+
+
+
+
+
+
 
 		
 		// esegue $rows inserimenti nella tabella migrations ...

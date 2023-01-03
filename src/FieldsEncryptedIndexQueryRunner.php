@@ -84,17 +84,25 @@ class FieldsEncryptedIndexQueryRunner {
 	
 			Log::channel('stderr')->info('FEIQR!runQuery:DATA', [$rs] );
 
-			/*
+			$toDecrypt = $q['fiels2decrypt'];
+			
+			Log::channel('stderr')->debug('FEIQR!runQuery:DECRYPT:INFO', [$toDecrypt] );
+
 			foreach($rs as $item) 
 			{
 				// Log::channel('stderr')->info('-', [$item] );
-				Log::channel('stderr')->info('-', [$item->id, $item->migration] );
-			}
-			*/
+				Log::channel('stderr')->debug('FEIQR!runQuery:DECRYPT:ROW', [$item] );
 
-			// se vi sono dati da decifrare
+				foreach ($item as $key => $value) {
+					Log::channel('stderr')->debug('FEIQR!runQuery:DECRYPT:ROW', [$key, $value, $item->{$key}] );
+					$item->{$key} = $this->decodeField($key, $value, $toDecrypt);
+				}
+
+			}
 			
-			if ( array_key_exists('fiels2decrypt', $q) ) 
+			/*
+						
+			if ( array_key_exists('fiels2decrypt', $q) && (count($q['fiels2decrypt']) > 0)  ) 
 			{
 				
 				$toDecrypt = $q['fiels2decrypt'];
@@ -104,23 +112,27 @@ class FieldsEncryptedIndexQueryRunner {
 				foreach($rs as $item) 
 				{
 					// Log::channel('stderr')->info('-', [$item] );
-					Log::channel('stderr')->info('-', [$item] );
+					Log::channel('stderr')->info('FEIQR!ROW!TO_DECRYPT', [$item] );
 
+			
 					foreach( $toDecrypt as $fn)
 					{
+						
+						
+						dd($fn);
 
-						// Log::channel('stderr')->info(' ### ', [$fn] );
-						// Log::channel('stderr')->info(' ### ', [$fn['fieldName']] );
-						// $object->{'$t'};
+						$v = $item->{$fn['fieldNameAlias']};
 
-						// dd($fn);
+						if( $fn['fieldType'] )
 
-						$v = $item->{$fn['fieldName']};
 						Log::channel('stderr')->info('FEIQR!runQuery:@@CHECK@-U-@', [$v] );
 
-						if(is_null($v)) {
+						if(is_null($v)) 
+						{
 							Log::channel('stderr')->info('FEIQR!runQuery:@@CHECK@-D1@', [$v] );
-						} else {
+						} 
+						elseif (true)
+						{
 							
 							$s = [
 								"fieldName" => $fn['tableName'] . "." . $fn['fieldName'],
@@ -128,26 +140,9 @@ class FieldsEncryptedIndexQueryRunner {
 							];
 
 							$v2 = $this->FEI_encrypter->decrypt_sodium($s);	
-							$item->{$fn['fieldName']} = $v2;
+							$item->{$fn['fieldNameAlias']} = $v2;
 							Log::channel('stderr')->info('FEIQR!runQuery:@@CHECK@-D2@', [$v2] );
 						}
-
-						
-
-						/*
-						if(isNull($v) || isEmpty($v)) {
-
-						} else {
-							$v2 = FieldsEncryptedIndexEncrypter::decrypt($v);	
-							$item->{$fn['fieldName']} = $v2;
-						}
-						*/
-
-						// Log::channel('stderr')->info(' ### ', [$v] );
-						// $v2 = FieldsEncryptedIndexEncrypter::decrypt($v);
-						// Log::channel('stderr')->info(' ### ', [$v2] );
-
-						// $item->{$fn['fieldName']} = $v2;
 
 					}
 
@@ -156,14 +151,16 @@ class FieldsEncryptedIndexQueryRunner {
 
 			}  
 
+			*/
 
-			Log::channel('stderr')->info('FEIQR!runQuery:TO_ORDER', [$toDecrypt] );
+
+			Log::channel('stderr')->info('FEIQR!runQuery:TO_ORDER', ['-------TODO---------------'] );
 		
 
 			// order values if encrypted
 
 
-			Log::channel('stderr')->info('FEIQR!runQuery:TO_LIMIT', [$toDecrypt] );
+			Log::channel('stderr')->info('FEIQR!runQuery:TO_LIMIT', ['-------TODO---------------'] );
 
 			// limit
 
@@ -407,6 +404,54 @@ class FieldsEncryptedIndexQueryRunner {
 
 	}
 
+
+
+	public function decodeField($fieldName, $fieldValue, $config)
+	{
+		Log::channel('stderr')->debug('FEIQR!decodeField', [$fieldName, $fieldValue] );
+		// search in config ... if ENCRYPTED o ENCRYPED INDEX ... Decrypt!
+		foreach( $config as $item )
+		{
+			if ( $item['fieldNameAlias'] === $fieldName ) 
+			{
+				// $item['tableName'] = $sc['tableName'];
+				// $item['tableNameHashed'] = $sc['tableNameHashed'];
+
+				if (in_array($item['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
+				{
+					$s = [
+						"fieldName" => $item['tableName'] . "." . $item['fieldName'],
+						"fieldValue" => $fieldValue
+					];
+	
+					$v2 = $this->FEI_encrypter->decrypt_sodium($s);	
+					return $v2;
+				}
+
+				return $fieldValue;
+			}
+		}
+
+		return $fieldValue;
+
+
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM
 
 	// Costruisce la query per essere eseguita
 	public function buildQuery(array $sqlRequest) 

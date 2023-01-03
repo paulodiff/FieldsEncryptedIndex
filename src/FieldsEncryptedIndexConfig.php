@@ -280,6 +280,7 @@ class FieldsEncryptedIndexConfig {
 				"tableName" => $sc['tableName'],
 				"tableNameHashed" => $sc['tableNameHashed'],
 				"fieldName" => $fname,
+				"fieldNameHashed" => $fname,
 				"fieldType"=> "PRIMARYKEY"
 			];
 		}
@@ -347,7 +348,7 @@ class FieldsEncryptedIndexConfig {
 		}
 	}
 
-	public function retunArrayFromJson($j)
+	public function returnArrayFromJson($j)
 	{
 		
 		$tableArrayConfig = json_decode($j, true);
@@ -356,10 +357,17 @@ class FieldsEncryptedIndexConfig {
 		{
 			Log::channel('stderr')->error('FieldsEncryptedIndexConfig:returnArrayFromJson ERROR - !', [ $j] );  
 			print_r($j);  
-			throw new FieldsEncryptedIndexException('FieldsEncryptedIndexConfig:retunArrayFromJson JSON parse error');
+			throw new FieldsEncryptedIndexException('FieldsEncryptedIndexConfig:returnArrayFromJson JSON parse error');
 		}
 
 		return $tableArrayConfig;
+
+	}
+
+	public function returnJsonFromArray($j)
+	{
+
+		return json_encode($j);
 
 	}
 

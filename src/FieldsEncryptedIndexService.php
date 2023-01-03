@@ -447,10 +447,8 @@ class FieldsEncryptedIndexService
 	{
 		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tableName, $fieldName, $fieldValue, $value] );
 
-
 		$fc = $this->FEI_config->getFieldConfig($tableName . "." . $fieldName);
 		$ft = $fc['fieldType'];
-
 		
 		// $fei_index_name = $fc['fieldFEIIndexName'];
 		// $fei_key_name = $fc['fieldFEIKeyFieldName'];
@@ -458,13 +456,10 @@ class FieldsEncryptedIndexService
 
 		Log::channel('stderr')->debug('FEIS!FEI_set:', [$fc] );
 		
-
-			
-
 		// $data = self::rtiSanitize($fValue, $fSafeChars, $fTransform);
-
 		// Tokenize ... su
 		// $keyList = $this->feiTokenize($fieldValue, $fMinTokenLen);
+
 		$keyList = $this->feiTokenize($fieldValue, 3);
 
 		// TODO function makeTag TAG!
@@ -501,20 +496,8 @@ class FieldsEncryptedIndexService
 
 		Log::channel('stderr')->debug('FEIS!FEI_set:DONE!', [$fc['fieldFEIIndexName'], count($dataList)] );
 
-		/*
-		DB::table('users')->insertOrIgnore([
-			['id' => 1, 'email' => 'sisko@example.com'],
-			['id' => 2, 'email' => 'archer@example.com'],
-		]);
-		*/
 
 		// dd('STOP : FEI_set');
-		
-
-		// crea i token
-		// rimuove gli spazi
-		// rimuove i duplicati
-		// inserisce
 
 	}
 
@@ -551,10 +534,23 @@ class FieldsEncryptedIndexService
 	public function FEI_del($tableName, $fieldName, $index)
     {
         Log::channel('stderr')->debug('FEIS!FEI_del:', [$tableName, $fieldName, $index] );
-		// TODO function makeTag TAG!
-		$tag = $tableName . ":" . $fieldName;
 
-        $this->deleteFromStorage($tag, $index);
+		$fc = $this->FEI_config->getFieldConfig($tableName . "." . $fieldName);
+				
+		Log::channel('stderr')->debug('FEIS!FEI_del:', [$fc] );
+
+		
+		// $fei_index_name = $fc['fieldFEIIndexName'];
+		// $fei_key_name = $fc['fieldFEIKeyFieldName'];
+		// $fei_value_name = $fc['fieldFEIValueFieldName'];
+
+		DB::table($fc['fieldFEIIndexName'])
+		// ->where('rt_tag', $tag)
+		->where($fc['fieldFEIValueFieldName'], $index)
+		->delete();
+
+
+        // $this->deleteFromStorage($tag, $index);
         return true;
     }
 

@@ -60,7 +60,7 @@ class FieldsEncryptedIndexEngine {
 
 		Log::channel('stderr')->debug('FieldsEncryptedIndexEngine:process', [] );   
 
-		$aR  = $this->FEI_config->retunArrayFromJson($q);
+		$aR  = $this->FEI_config->returnArrayFromJson($q);
 
 		Log::channel('stderr')->info('FieldsEncryptedIndexEngine:process', [$aR] );
 		
@@ -78,7 +78,14 @@ class FieldsEncryptedIndexEngine {
 
 		// REINDEX tablename;
 
-		return $r;
+		// JSON
+	
+
+		$j  = $this->FEI_config->returnJsonFromArray($r);
+
+		// dd($j);
+
+		return $j;
 
 	}
 
