@@ -79,16 +79,16 @@ class FieldsEncryptedIndexEncrypter
     {
 		Log::channel('stderr')->debug('encrypt_sodium', [$s] );   
 
-		$sc = $this->FEI_config->getFieldSecurityConfig($s['fieldName']);
+		$sc = $this->FEI_config->getFieldConfig($s['fieldName']);
 
 		// dd($sc);
 
         // $k = self::getKey($s['fie']);
         // $nonce = self::getNonce($o);
-        $enc_result = sodium_crypto_secretbox( $s['fieldValue'], sodium_hex2bin($sc['nonce']), sodium_hex2bin($sc['key']));
+        $enc_result = sodium_crypto_secretbox( $s['fieldValue'], sodium_hex2bin($sc['fieldNonce']), sodium_hex2bin($sc['fieldKey']));
         $encoded = sodium_bin2hex( $enc_result );
-        sodium_memzero($sc['nonce']);
-        sodium_memzero($sc['key']);
+        sodium_memzero($sc['fieldNonce']);
+        sodium_memzero($sc['fieldKey']);
         return $encoded;
     }
 
@@ -98,18 +98,18 @@ class FieldsEncryptedIndexEncrypter
 
 		Log::channel('stderr')->debug('decrypt_sodium', [$s] );   
 
-		$sc = $this->FEI_config->getFieldSecurityConfig($s['fieldName']);
+		$sc = $this->FEI_config->getFieldConfig($s['fieldName']);
 
         // $k = self::getKey();
         // $nonce = self::getNonce();
         $decoded = sodium_hex2bin($s['fieldValue']);
-        $o = sodium_crypto_secretbox_open($decoded, sodium_hex2bin($sc['nonce']), sodium_hex2bin($sc['key']) );
+        $o = sodium_crypto_secretbox_open($decoded, sodium_hex2bin($sc['fieldNonce']), sodium_hex2bin($sc['fieldKey']) );
         // $nonce = mb_substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, '8bit');
         // $encrypted_result = mb_substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES, null, '8bit');
         // $o = sodium_crypto_secretbox_open($encrypted_result, $nonce, $k);
         //$o = gzinflate($o);
-		sodium_memzero($sc['nonce']);
-        sodium_memzero($sc['key']);
+		sodium_memzero($sc['fieldNonce']);
+        sodium_memzero($sc['fieldKey']);
         return $o;
     }
 

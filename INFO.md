@@ -264,6 +264,11 @@ CREATETABLE
 - hash per i valori degli indici che si può mettere sul campo indice per rigenerare il valore
 
 
+- chiave per il valore da cifrare
+- chiave per gli hash
+- nome indice
+- nome key
+- nome value
 
 
 

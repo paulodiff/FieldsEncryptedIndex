@@ -54,7 +54,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 				$jsonRequest = '{
 					"action"    : "INSERT",
-					"tableName" : "docs",
+					"table" : "docs",
 					"fields" : [
 							{  
 								"fieldName": "docs.description",   
@@ -87,6 +87,119 @@ class FieldsEncryptedIndexTestCommand extends Command
 			}
 
 		} 
+
+
+		elseif ( $action == "updateDocs" ) {
+
+			// UPDATE `laravel`.`migrations` SET `migration`='Tom Sam Jhon q', `batch`='80253' WHERE  `id`=10;
+
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $rows, [$action] );
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $fieldName, [$action] );
+
+			for($i = 0; $i<$rows; $i++)
+			{
+				Log::channel('stderr')->debug('**********************************************************************:' . $i, [$action] );
+				Log::channel('stderr')->debug('FieldsEncryptedIndexTestCommand:' . $i, [$action] );
+				
+				$faker = Faker::create('SeedData');
+
+				// get a random id from all ids
+
+				$this->FEI_config = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexConfig();
+				$tableNameHashed = $this->FEI_config->getHashedTableNameConfig('docs');
+				$primaryKeyName = $this->FEI_config->getTablePrimaryKeyNameConfig('docs');
+		
+				
+				$Ids = DB::table($tableNameHashed)->select($primaryKeyName)->get();
+				$cntIds = count($Ids);
+				$idSelected = $faker->numberBetween(1, $cntIds);
+
+				// dd ( $Ids[$idSelected-1] );
+				// $val = intval($total_results->getText());
+				// dd ( intval($Ids[$idSelected-1]->id)   );
+				// $v = DB::table('migrations')->where('id', intval($Ids[$idSelected-1]->id) )->get();
+				// dd($v[0]);
+
+				// create JSON request
+				$rNumber = $faker->randomNumber(5, true);
+				$rMigrationName = $faker->name();
+				$rSentence = $faker->sentence();
+				$rName = $faker->words(3, true);
+				$rSurname = $faker->words(3, true);
+
+				// get di tre caratteri
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:SEARCH:', [$toSearch,$fieldName, $textFromSearch] );
+
+				/*
+
+			"fieldName": "description",
+			"fieldName": "batchNumber",
+			"fieldName": "note",
+			"fieldName": "address",
+
+
+				*/
+
+
+				$jsonRequest = '{
+					"action" : "UPDATE",
+					"table" : "docs",
+					"fields" : [
+							{  
+								"fieldName" : "docs.description",
+								"fieldValue" : "' . $rName . '"  
+							},
+							{  
+								"fieldName" : "docs.batchNumber",
+								"fieldValue" : ' . $rNumber . '  
+							},
+							{  
+								"fieldName" : "docs.note",
+								"fieldValue" : "' . $rSurname . '"  
+							},
+							{  
+								"fieldName" : "docs.address",
+								"fieldValue" : "' . $rSurname . '"  
+							}
+						
+					],
+
+					"where" : [
+            
+						{
+							"operator" : "",
+							"clauses" : [
+								{
+									"fieldName" : "docs.id",
+									"operator" : "=",
+									"fieldValue" : ' . $idSelected . '
+								}
+							]
+						}
+					]
+
+							
+
+						}';
+
+				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $idSelected, $jsonRequest] );
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $toSearch, $jsonRequest] );
+				
+				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+				$q = $this->FEI_engine->process($jsonRequest);
+				
+				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:Conteggio n. rec:', [ count($q), count($test1) ] );
+				
+	
+				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand[' . $i . '] ' . $action . ' :FINAL!:', [] );
+				
+				// recupero seconda lista ids
+		
+			} 
+
+
+
+		}
 
 
 		

@@ -39,6 +39,7 @@ class FieldsEncryptedIndexService
         Log::channel('stderr')->debug('FEIS!MIN_TOKEN_SIZE', [$this->MIN_TOKEN_SIZE] );
         Log::channel('stderr')->debug('FEIS!STRING_SEPARATOR', [$this->STRING_SEPARATOR] );
 		$this->FEI_encrypter = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter();
+		$this->FEI_config = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexConfig();
     }
 
 
@@ -447,6 +448,19 @@ class FieldsEncryptedIndexService
 		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tableName, $fieldName, $fieldValue, $value] );
 
 
+		$fc = $this->FEI_config->getFieldConfig($tableName . "." . $fieldName);
+		$ft = $fc['fieldType'];
+
+		
+		// $fei_index_name = $fc['fieldFEIIndexName'];
+		// $fei_key_name = $fc['fieldFEIKeyFieldName'];
+		// $fei_value_name = $fc['fieldFEIValueFieldName'];
+
+		Log::channel('stderr')->debug('FEIS!FEI_set:', [$fc] );
+		
+
+			
+
 		// $data = self::rtiSanitize($fValue, $fSafeChars, $fTransform);
 
 		// Tokenize ... su
@@ -461,10 +475,12 @@ class FieldsEncryptedIndexService
 		foreach( $keyList as $tokenValue )
 		{
 
+			// TODO HASH VALUE!!!
+
 			$dataList[] = [
 				// 'rt_tag' => $tag,
-				'rt_key' => $tokenValue,
-				'rt_value' => $value,
+				$fc['fieldFEIKeyFieldName'] => $tokenValue,
+				$fc['fieldFEIValueFieldName'] => $value,
 			];
 
 			
@@ -472,18 +488,18 @@ class FieldsEncryptedIndexService
 		    
 		}
 
-		// check i table exists
-		$tname = $this->setupStorage($tag);
-     
-		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tname] );
+		// dd($dataList);
+
+		
+		Log::channel('stderr')->debug('FEIS!FEI_set:', [$fc['fieldFEIIndexName']] );
 
 		// dd($dataList);
 
-		DB::table($tname)->insertOrIgnore(	$dataList );
+		DB::table($fc['fieldFEIIndexName'])->insertOrIgnore($dataList);
 
 		// return $tname . ":" . $key . ":" . $value;
 
-		Log::channel('stderr')->debug('FEIS!FEI_set:DONE!', [$tname, count($dataList)] );
+		Log::channel('stderr')->debug('FEIS!FEI_set:DONE!', [$fc['fieldFEIIndexName'], count($dataList)] );
 
 		/*
 		DB::table('users')->insertOrIgnore([

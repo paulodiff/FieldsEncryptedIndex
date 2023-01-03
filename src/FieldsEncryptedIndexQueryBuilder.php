@@ -172,9 +172,9 @@ class FieldsEncryptedIndexQueryBuilder {
 			// Cifrare la query
 			// Elencare tutti i campi per aggiornare l'eventuale indice
 
-			Log::channel('stderr')->info($this->SHORT_NAME  . ':### 1 UPDATE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
-			$fromTableClause = $this->buildFromTableClause($sqlRequest, " "); 
-			Log::channel('stderr')->info($this->SHORT_NAME  . ':### FROM TABLE SQL-> ##', [$fromTableClause] );
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### 1 UPDATE ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@', $sqlRequest]  );
+			$fromTableClause = $this->buildFromTableClause($sqlRequest, ""); 
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':### FROM TABLE SQL-> ##', [$sqlRequest['table']] );
 
 			if ( array_key_exists('where', $sqlRequest) ) 
 			{
@@ -198,8 +198,10 @@ class FieldsEncryptedIndexQueryBuilder {
 			}
 
 			// Chech if query is on multiple rows via CONFIG
+			// UPDATE ONLY 1 ROW
 
-			$dataInfo = $this->FEI_config->storageCountRow($fromTableClause , $whereClause);
+			Log::channel('stderr')->info($this->SHORT_NAME  . ':CHECK IF ONLY ONE ROW TO UPDATE :', [$sqlRequest['table'] , $fromTableClause, $whereClause] );
+			$dataInfo = $this->FEI_config->storageCountRow($sqlRequest['table'] , $whereClause);
 
 			if (  $dataInfo['rowCount'] !== 1)
 			{
@@ -261,8 +263,32 @@ class FieldsEncryptedIndexQueryBuilder {
 				if ( in_array($configTable['fields'][$key]['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]) )
 				{
 
-					$configTable['fields'][$key]['key'] = $this->FEI_encrypter->keygen_sodium();
-					$configTable['fields'][$key]['nonce'] = $this->FEI_encrypter->noncegen_sodium();
+					$configTable['fields'][$key]['fieldKey'] = $this->FEI_encrypter->keygen_sodium();
+					$configTable['fields'][$key]['fieldNonce'] = $this->FEI_encrypter->noncegen_sodium();
+
+				}
+
+				if ( in_array($configTable['fields'][$key]['fieldType'], ["ENCRYPTED_INDEXED"]) )
+				{
+
+					$configTable['fields'][$key]['fieldFEIIndexName'] = $this->FEI_encrypter->short_hash_sodium(
+						$configTable['tableName'] . "." . $configTable['fields'][$key]['fieldName'],
+						$this->FEI_encrypter->keygen_short_hash_sodium()
+					);
+					
+					
+					$configTable['fields'][$key]['fieldFEIKeyFieldName'] = $this->FEI_encrypter->short_hash_sodium(
+						$configTable['tableName'] . "." . $configTable['fields'][$key]['fieldName'],
+						$this->FEI_encrypter->keygen_short_hash_sodium()
+					);
+					
+					
+					$configTable['fields'][$key]['fieldFEIValueFieldName'] = $this->FEI_encrypter->short_hash_sodium(
+						$configTable['tableName'] . "." . $configTable['fields'][$key]['fieldName'],
+						$this->FEI_encrypter->keygen_short_hash_sodium()
+					);
+
+					$configTable['fields'][$key]['fieldFEINonce'] = $this->FEI_encrypter->keygen_short_hash_sodium();
 
 				}
 			}
@@ -295,6 +321,9 @@ class FieldsEncryptedIndexQueryBuilder {
 
 
 
+			$createFEIIndexClauses = $this->buildCreateFEIIndexClauses($sqlRequest);
+			$Response['sqlFEIStatement']= $createFEIIndexClauses;
+
 		}
 
 
@@ -309,6 +338,9 @@ class FieldsEncryptedIndexQueryBuilder {
 		
 		$Response['verbClause'] = $verbClause;
 		$Response['sqlStatement']= $sqlStatement;
+		
+
+		// dd($Response);
 		
 		return $Response;
 	}
@@ -351,10 +383,10 @@ class FieldsEncryptedIndexQueryBuilder {
 		// se esiste tableName ritona altrimenti	
 		
 
-		if ( array_key_exists('tableName', $r) 	)
+		if ( array_key_exists('table', $r) 	)
 		{
 
-			$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['tableName']);
+			$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['table']);
 			$SQL = $cmd . $tableNameHashed;
 			return $SQL;
 
@@ -648,19 +680,33 @@ class FieldsEncryptedIndexQueryBuilder {
         // return $curOPERATOR;
     }
 
+	// passa fiedlName con già la tabella ... da verificare ...
 	function getFieldClause($o)
     {
+		// dividere $tableName da $fieldName
+
+		// check fieldName in query in table config amd type
+		$pieces = explode(".", $o['fieldName']);
+		$tname = $pieces[0];
+		$fname = $pieces[1];
         
-        $ft = $this->FEI_config->getFieldTypeDefinition($o['fieldName']);
+        $fc = $this->FEI_config->getFieldConfig($o['fieldName']);
+
+		$ft = $fc['fieldType'];
+
+		// dd($ft);
+
         Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldClause:', [$o, $ft] );
 
         if (in_array($ft, ["LONG"])) 
         {
-            return  " " . $o['fieldName'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
+			return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
+            // return  " " . $o['fieldName'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
         } 
 		elseif (in_array($ft, ["STRING"])) 
         {
-            return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
+			return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
+            // return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
         } 
         elseif (in_array($ft, ["ENCRYPTED"]))
         {
@@ -680,10 +726,10 @@ class FieldsEncryptedIndexQueryBuilder {
 				$value = $this->FEI_encrypter->encrypt_sodium($o);
 
 				// $value = FieldsEncryptedIndexEncrypter::encrypt($o['value']);
-				Log::channel('stderr')->debug($this->SHORT_NAME  . '[getFieldClause:', [$value]);
+				Log::channel('stderr')->debug($this->SHORT_NAME  . ':getFieldClause:', [$value]);
 								
 
-				return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $value . "' ";
+				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $value . "' ";
 			}
             
         }
@@ -727,6 +773,11 @@ class FieldsEncryptedIndexQueryBuilder {
 			}
            
         }
+		elseif (in_array($ft, ["PRIMARYKEY"])) 
+        {
+			return  " " . $fc['fieldName'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
+            // return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
+        } 
         else
         {
             Log::channel('stderr')->error('fieldType NOT FOUND!', [$ft] );
@@ -802,7 +853,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 					$plainValue = $item['fieldValue'];
 
-					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [ $plainValue ] );
+					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [ $plainValue, $item ] );
 					
 					// $value = FieldsEncryptedIndexEncrypter::encrypt( $plainValue );
 
@@ -820,6 +871,8 @@ class FieldsEncryptedIndexQueryBuilder {
 				elseif (in_array($ft, ["ENCRYPTED_INDEXED"]))
 				{
 					// $value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+
+					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED_INDEXED:', [ $item ] );
 
 					$value = $this->FEI_encrypter->encrypt_sodium($item);
 
@@ -847,7 +900,7 @@ class FieldsEncryptedIndexQueryBuilder {
 			Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: !RETURN!:', [$r] );
 
 
-			dd($r);
+			// dd($r);
 
 			return $r;
 
@@ -883,7 +936,7 @@ class FieldsEncryptedIndexQueryBuilder {
 			//	die();
 			//}
 
-			$tableName = $this->buildFromTableClause($r, ''); // get table name from request
+			$tableName = $r['table'];
 
 
 			foreach ($r['fields'] as $index => $item) 
@@ -892,14 +945,16 @@ class FieldsEncryptedIndexQueryBuilder {
 
 				// check field's type return value only if exists
 				// $ft = $this->getFieldTypeDefinition($item['fieldName']);
-				$ft = $this->FEI_config->getFieldTypeDefinition($item['fieldName']);
+				$fc = $this->FEI_config->getFieldConfig($item['fieldName']);
+				$ft = $fc['fieldType'];
 
+				
 
 				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause: fieldType to check:', [$ft] );
 
 				
 				// ($INSERT_CLAUSE_UP === "") ? "pass" : "Fail";
-				$fn =  $item['fieldName'];
+				$fn =  $fc['fieldNameHashed'];
 
 				$UPDATE_CLAUSE = ($UPDATE_CLAUSE === "") ? $fn : $UPDATE_CLAUSE . " , " . $fn ;
 
@@ -916,13 +971,13 @@ class FieldsEncryptedIndexQueryBuilder {
 				{
 					$plainValue = $item['fieldValue'];
 
-					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [ $plainValue ] );
+					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause: ENCRYPTED:', [ $plainValue ] );
 					
 					// $value = FieldsEncryptedIndexEncrypter::encrypt( $plainValue );
 					$value = $this->FEI_encrypter->encrypt_sodium($item);
 					// $value = FieldsEncryptedIndexEncrypter::encrypt($o['value']);
-					Log::channel('stderr')->debug($this->SHORT_NAME  . '[getFieldClause:', [$value]);
-					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [$value] );
+					Log::channel('stderr')->debug($this->SHORT_NAME  . ':getFieldClause:', [$value]);
+					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause: ENCRYPTED:', [$value] );
 					// Log::channel('stderr')->info($this->SHORT_NAME  . 'buildInsertClause: ENCRYPTED:', [FieldsEncryptedIndexEncrypter::encrypt( $plainValue )] );
 					
 					$UPDATE_CLAUSE = $UPDATE_CLAUSE . " = '" . $value . "'" ;
@@ -931,6 +986,8 @@ class FieldsEncryptedIndexQueryBuilder {
 				elseif (in_array($ft, ["ENCRYPTED_INDEXED"]))
 				{
 					// $value = FieldsEncryptedIndexEncrypter::encrypt($item['fieldValue']);
+
+					Log::channel('stderr')->info($this->SHORT_NAME  . 'buildUpdateClause: ENCRYPTED:', [ $value ] );
 
 					$value = $this->FEI_encrypter->encrypt_sodium($item);
 					$UPDATE_CLAUSE = $UPDATE_CLAUSE . " = '" . $value . "'" ;
@@ -968,6 +1025,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 	}
 
+	// crea lo statement per la creazione della tabella
 	function buildCreateTableClause(array $r)
 	{
 		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateTableClause:', [is_array($r)] );
@@ -1012,14 +1070,14 @@ class FieldsEncryptedIndexQueryBuilder {
 				die();
 			}
 			
-			$fieldClauses[] = $fieldNameHashed  . " " . $sqlFielddefs;
+			$fieldClauses[] = " `" . $fieldNameHashed  . "` " . $sqlFielddefs;
 
 		}
 
 		// dd($fieldClauses);
 
-		$CREATE_CLAUSE = $CREATE_CLAUSE . " " . $tableNameHashed;
-		$CREATE_CLAUSE = $CREATE_CLAUSE . " ( " . $primaryKeyName . " " . $primaryKeySqlDefs;
+		$CREATE_CLAUSE = $CREATE_CLAUSE . " `" . $tableNameHashed . "` ";
+		$CREATE_CLAUSE = $CREATE_CLAUSE . " ( `" . $primaryKeyName . "` " . $primaryKeySqlDefs;
 
 		foreach( $fieldClauses as $sqlField)
 		{
@@ -1028,7 +1086,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 		}
 
-		$CREATE_CLAUSE = $CREATE_CLAUSE . ", PRIMARY KEY (" . $primaryKeyName . ")  ) ";
+		$CREATE_CLAUSE = $CREATE_CLAUSE . ", PRIMARY KEY ( `" . $primaryKeyName . "` )  ) ";
 
 		// dd($CREATE_CLAUSE);
 
@@ -1057,27 +1115,106 @@ class FieldsEncryptedIndexQueryBuilder {
 			INDEX `Indice 3` (`raccomandate_data_reg`)
 
 			CREATE TABLE `migrations` (
-	`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
-	`migration` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`batch` INT(11) NULL DEFAULT NULL,
-	`description` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`description_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`name` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`name_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`surname` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`surname_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
-	`ts` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
-	PRIMARY KEY (`id`)
-)
+			`id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+			`migration` VARCHAR(255) NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+			`batch` INT(11) NULL DEFAULT NULL,
+			`description` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+			`description_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+			`name` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+			`name_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+			`surname` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+			`surname_plain` LONGTEXT NULL DEFAULT NULL COLLATE 'utf8mb4_unicode_ci',
+			`ts` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (`id`)
+			)
 
 			*/
-
 
 
 		// dd($r);
 
 	}
 
+
+	// crea lo statement per la creazione degli indici FEI
+	function buildCreateFEIIndexClauses(array $r)
+	{
+		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateFEIIndexClauses:', [is_array($r)] );
+
+		$CREATE_CLAUSE = " CREATE TABLE ";
+
+		// $tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['tableName']);
+		// $primaryKeyName = $this->FEI_config->getTablePrimaryKeyNameConfig($r['tableName']);
+
+		$primaryKeySqlDefs = " INT(11) NOT NULL AUTO_INCREMENT ";
+
+		// Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateFEIIndexClauses:', [$tableNameHashed] );
+		// Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateFEIIndexClauses:', [$primaryKeyName] );
+
+		$FEIIndexCreateClauses = [];
+
+		foreach ($r['fields'] as $item) 
+		{
+			
+			$fieldClause = [];
+			$sqlFielddefs = "";
+
+			Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildInsertClause: fieldName:', [$item['fieldName']] );
+
+			// check field's type return value only if exists
+			// $ft = $this->getFieldTypeDefinition($item['fieldName']);
+			$fc = $this->FEI_config->getFieldConfig($r['tableName'] . "." . $item['fieldName']);
+			$ft = $fc['fieldType'];
+
+			// dd($fc);
+						
+			// Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateFEIIndexClauses:', [$fieldNameWithTable] );
+			// Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildCreateFEIIndexClauses:', [$fieldNameHashed] );
+			
+			if (in_array($ft, ["ENCRYPTED_INDEXED"])) 
+			{
+				
+
+				/*
+
+				CREATE TABLE `rt_098f6bcd4621d373cade4e832627b4f6` (
+						`rt_key` TEXT NOT NULL COLLATE 'utf8mb4_unicode_ci',
+						`rt_value` BIGINT(20) NOT NULL
+)				
+
+"fieldName" => "address"
+  "fieldType" => "ENCRYPTED_INDEXED"
+  "fieldNameHashed" => "a871b2ddaad683c4"
+  "fieldKey" => "238ddb7151a7fa438da4c815a5ac4ed38d1fd3e4599accb8996dd29019671495"
+  "fieldNonce" => "ee06d6c6533a028c7e2d7b1e886e8cc5ddcd28640cceb80c"
+  "fieldFEIIndexName" => "57aeed01cd73c4f8"
+  "fieldFEIKeyFieldName" => "3691459f4dd30c07"
+  "fieldFEIValueFieldName" => "03811baa5aeab4d1"
+  "fieldFEINonce" => "75c428248d975861a18ef3b808567cc3"
+
+*/
+				$sqlCreateFEIIndex = " CREATE TABLE `" . $fc['fieldFEIIndexName'] . "` (";
+				$sqlCreateFEIIndex = $sqlCreateFEIIndex . " `id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT, ";
+				$sqlCreateFEIIndex = $sqlCreateFEIIndex . " `" . $fc['fieldFEIKeyFieldName'] . "`  LONGTEXT NOT NULL, ";
+				$sqlCreateFEIIndex = $sqlCreateFEIIndex . " `" . $fc['fieldFEIValueFieldName'] . "`  BIGINT(20) NOT NULL, ";
+				$sqlCreateFEIIndex = $sqlCreateFEIIndex . " PRIMARY KEY (`id`) ) ";
+
+				// dd($sqlCreateFEIIndex);
+
+				$FEIIndexCreateClauses[] = $sqlCreateFEIIndex;
+				
+			} 
+			
+			// $fieldClauses[] = " `" . $fieldNameHashed  . "` " . $sqlFielddefs;
+
+		}
+
+
+
+		return $FEIIndexCreateClauses;
+
+
+	}
 
 
 

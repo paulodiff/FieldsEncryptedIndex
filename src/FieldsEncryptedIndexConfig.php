@@ -212,6 +212,7 @@ class FieldsEncryptedIndexConfig {
     {
         // Log::channel('stderr')->info('getFieldTypeDefinition:', [$fn] );
         // check fieldName in query in table config amd type
+
         $pieces = explode(".", $fn);
         $tname = $pieces[0];
         $fname = $pieces[1];
@@ -224,6 +225,14 @@ class FieldsEncryptedIndexConfig {
 
         if ( array_search($fname, array_column($gc['fields'], 'fieldName') ) === false ) 
         {
+			// is a PrimaryKey ?
+
+			if ( $fname === $gc['primaryKey'] ) 
+			{
+				Log::channel('stderr')->debug('getFieldTypeDefinition:IS A PRIMARY KEY!', [$tname, $fname, array_search($fname, array_column($gc['fields'], 'fieldName') )] );
+				return 'PRIMARYKEY';
+			}
+			
             Log::channel('stderr')->debug('getFieldTypeDefinition:NOT FOUND!', [$tname, $fname, array_search($fname, array_column($gc['fields'], 'fieldName') )] );
             die();
         } 
@@ -234,17 +243,56 @@ class FieldsEncryptedIndexConfig {
 
 			// Log::channel('stderr')->info('getFieldTypeDefinition:return ', [$key] );
 
-            $fiedlType = $gc['fields'][$key]['fieldType'];
+            $fieldType = $gc['fields'][$key]['fieldType'];
             // Log::channel('stderr')->info('FOUND!', [$tname, $fname, $GLOBAL_TABLE_CONFIG[$tname]['fields'][$key]['fieldType']] );
 
 			// Log::channel('stderr')->info('getFieldTypeDefinition:return ', [$fiedlType] );
 
-            return $fiedlType;
+            return $fieldType;
         }
     }
 
+
+	public function getFieldConfig($fn)
+	{
+		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getFieldConfig', [ $fn ] ); 
+
+		$pieces = explode(".", $fn);
+        $tname = $pieces[0];
+        $fname = $pieces[1];
+
+		$sc = $this->loadConfig($tname);
+
+		foreach( $sc['fields'] as $item )
+		{
+			if ( $item['fieldName'] === $fname ) 
+			{
+				$item['tableName'] = $sc['tableName'];
+				$item['tableNameHashed'] = $sc['tableNameHashed'];
+				return $item;
+			}
+		}
+		
+		if ( $fname === $sc['primaryKey'] ) 
+		{
+			Log::channel('stderr')->debug('getFieldConfig:IS A PRIMARY KEY!', [] );
+			return [
+				"tableName" => $sc['tableName'],
+				"tableNameHashed" => $sc['tableNameHashed'],
+				"fieldName" => $fname,
+				"fieldType"=> "PRIMARYKEY"
+			];
+		}
+
+
+		die('getFieldConfig Error getFieldConfig not found in : ' . $fn);
+
+	}
+
+
     public function getFieldClause($o)
     {
+		die('NOT USED!');
         
         $ft = $this->getFieldTypeDefinition($o['fieldName']);
         Log::channel('stderr')->debug('getFieldClause:', [$ft] );
@@ -384,27 +432,7 @@ class FieldsEncryptedIndexConfig {
 
 	}
 
-	public function getFieldConfig($fn)
-	{
-		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:getFieldConfig', [ $fn ] ); 
 
-		$pieces = explode(".", $fn);
-        $tname = $pieces[0];
-        $fname = $pieces[1];
-
-		$sc = $this->loadConfig($tname);
-
-		foreach( $sc['fields'] as $item )
-		{
-			if ( $item['fieldName'] === $fname ) 
-			{
-				return $item;
-			}
-		}
-		
-		die('getHashedFieldNameConfig Error getFieldConfig not found in : ' . $fn);
-
-	}
 
 
 	public function getFieldSecurityConfig($fn)
@@ -521,7 +549,11 @@ class FieldsEncryptedIndexConfig {
 
 		$pkName = $this->getTablePrimaryKey($tableName);
 
-		$sqlStatement = "SELECT " .  $pkName . " FROM " . $tableName . "  " . $whereClause;
+
+		$tableNameHashed = $this->getHashedTableNameConfig($tableName);
+
+
+		$sqlStatement = "SELECT " .  $pkName . " FROM " . $tableNameHashed . "  " . $whereClause;
 
 		Log::channel('stderr')->debug('FieldsEncryptedIndexConfig:storageCountRow', [ $sqlStatement ] );
 

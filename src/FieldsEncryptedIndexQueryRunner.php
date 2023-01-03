@@ -370,21 +370,23 @@ class FieldsEncryptedIndexQueryRunner {
 
 			// dd($q);
 
+			// CREATE TABLE
+
 			DB::statement($sqlStatement);
 
-			// Last Inserted Ids ...
-			// https://www.larashout.com/laravel-8-get-last-id-of-an-inserted-model
-
-			// $lastInsertId = DB::getPdo()->lastInsertId();
-
-			// Log::channel('stderr')->info('FEIQR!runQuery:ID', [$lastInsertId] );
-
-			// INSERIMENTO DI TUTTE LE CHIAVI SUL DATABASE
+			// CREATE FEI INDEXES
 			
-			// CHECK ID Long and > 0
-			// $this->checkLastInsertedId($lastInsertId);
 
-			// REMOVE OLD KEYS
+			if ( array_key_exists('sqlFEIStatement', $q) ) 
+			{
+
+				foreach($q['sqlFEIStatement'] as $sqlFEICreate)
+				{
+					Log::channel('stderr')->info('FEIQR!runQuery:EXEC', [$sqlStatement] );
+					DB::statement($sqlFEICreate);
+				}
+
+			}
 
 			
 			Log::channel('stderr')->info('FEIQR!runQuery:CREATETABLE', ['---OK---'] );
