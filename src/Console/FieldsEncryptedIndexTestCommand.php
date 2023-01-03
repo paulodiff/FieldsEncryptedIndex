@@ -452,17 +452,101 @@ class FieldsEncryptedIndexTestCommand extends Command
 				$q_address = $this->FEI_engine->process($jsonRequest);
 
 
-				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_description] );				
-				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_note] );				
-				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_address] );				
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_description, $valueTofind] );				
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_note, $valueTofind] );				
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_address, $valueTofind] );				
 				
-				
-				
-				Log::channel('stderr')->notice('[[[[[VERIFICA 3 LIKE su description e su address stesso valore]]]]', [$i] );
 
+				$toSearch = '';
+
+				for ($j=0; $j<strlen($valueTofind) - 3 ; $j++)
+				{
+					$toSearch = substr($valueTofind, $j ,3);
+					$toSearch = trim($toSearch);
+					// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:SEACH TOKEN:', [$j, $toSearch, $textFromSearch] );
+					if (strlen($toSearch) == 3) break;
+				}
+
+
+				// Percentuale di errore
+				// $toSearch = "QUQUQUQQUQUQUQ";
 				
-							
+				Log::channel('stderr')->notice('[[[[[VERIFICA 3 LIKE su description e su address stesso valore]]]]', [$i, $toSearch] );
+
+				$jsonRequest = '{
+					"action" : "SELECT",
+					"tables" : 
+						[
+							{
+								"tableName" : "docs",
+								"tableAlias" : "docs"
+							}
+						],
+						
+					"fields" : 
+						[
+							{  "fieldName": "docs.id"   }
+						],
+
+					"where" : 
+						[
 			
+							{
+								"operator" : "",
+								"clauses" : 
+								[
+									{
+										"fieldName" : "docs.description",
+										"operator" : "LIKE",
+										"fieldValue" : "' . $toSearch . '"
+									}
+								]
+							}
+						]
+						
+					}';
+							
+					$q_like_description = $this->FEI_engine->process($jsonRequest);
+
+
+			
+				$jsonRequest = '{
+					"action" : "SELECT",
+					"tables" : 
+						[
+							{
+								"tableName" : "docs",
+								"tableAlias" : "docs"
+							}
+						],
+						
+					"fields" : 
+						[
+							{  "fieldName": "docs.id"   }
+						],
+
+					"where" : 
+						[
+			
+							{
+								"operator" : "",
+								"clauses" : 
+								[
+									{
+										"fieldName" : "docs.address",
+										"operator" : "LIKE",
+										"fieldValue" : "' . $toSearch . '"
+									}
+								]
+							}
+						]
+						
+					}';
+							
+					$q_like_address = $this->FEI_engine->process($jsonRequest);
+
+					Log::channel('stderr')->notice('[[[[[VERIFICA 3]]]]]]]]]]]]]]]', [$q_like_description, $toSearch] );				
+					Log::channel('stderr')->notice('[[[[[VERIFICA 3]]]]]]]]]]]]]]]', [$q_like_address, $toSearch] );	
 
 			} 
 

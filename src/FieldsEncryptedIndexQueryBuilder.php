@@ -727,7 +727,21 @@ class FieldsEncryptedIndexQueryBuilder {
         } 
 		elseif (in_array($ft, ["STRING"])) 
         {
-			return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
+
+			if ($o['operator'] === "=") 
+			{
+				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
+			}
+			elseif ($o['operator'] === "LIKE") 
+			{
+				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '%" . $o['fieldValue'] . "%' ";
+			}
+			else 
+			{
+				throw new FieldsEncryptedIndexException('STRING support only LIKE or = operator not ' . $o['operator'] . " fn=" . $o['fieldName']);				
+			}
+
+			
             // return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
         } 
         elseif (in_array($ft, ["ENCRYPTED"]))
@@ -758,11 +772,17 @@ class FieldsEncryptedIndexQueryBuilder {
         elseif (in_array($ft, ["ENCRYPTED_INDEXED"]))
         {
 			// only LIKE operator is supported
-			if ($o['operator'] !== "LIKE") 
+			if ($o['operator'] == "=") 
 			{
-				throw new FieldsEncryptedIndexException('ENCRYPTED_INDEXED support only LIKE operator not ' . $o['operator'] . " fn=" . $o['fieldName']);
+				Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldClause:', [$o] );
+					
+				$value = $this->FEI_encrypter->encrypt_sodium($o);
+
+				Log::channel('stderr')->debug($this->SHORT_NAME  . ':getFieldClause:', [$value]);
+
+				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $value . "' ";
 			}
-			else 
+			elseif ($o['operator'] == "LIKE")  
 			{
 				// Search value in FEI_q
 				// $tag = $tName . ":" .  $o['fieldName'];
@@ -791,8 +811,13 @@ class FieldsEncryptedIndexQueryBuilder {
 				// Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldClause:FEI_service', [$r] );
 				
 
-				return  " ( " . $tname ."." . $pkId . "  IN  (" . $idList. ") ) ";
+				return  " ( " . $fc['tableNameHashed'] ."." . $pkId . "  IN  (" . $idList. ") ) ";
+			} 
+			else 
+			{
+				throw new FieldsEncryptedIndexException('ENCRYPTED_INDEXED support only LIKE or = operator not ' . $o['operator'] . " fn=" . $o['fieldName']);
 			}
+
            
         }
 		elseif (in_array($ft, ["PRIMARYKEY"])) 

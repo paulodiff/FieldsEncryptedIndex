@@ -507,19 +507,48 @@ class FieldsEncryptedIndexService
 	{
 		Log::channel('stderr')->debug('FEIS!FEI_get:', [$tableName, $fieldName, $fieldValue] );
 
+
+		$fc = $this->FEI_config->getFieldConfig($tableName . "." . $fieldName);
+		Log::channel('stderr')->debug('FEIS!FEI_get:', [$fc] );
+
+
 		// $s2 = str_replace("%", "", $s);
         // Log::channel('stderr')->debug('FEIS!getRT*!:', [$tag, $s, $s2] );
 
 		// TODO function makeTag TAG!
-		$tag = $tableName . ":" . $fieldName;
+		// $tag = $tableName . ":" . $fieldName;
+
+		// $fei_index_name = $fc['fieldFEIIndexName'];
+		// $fei_key_name = $fc['fieldFEIKeyFieldName'];
+		// $fei_value_name = $fc['fieldFEIValueFieldName'];
+
+	
+
+        // $r = $this->getFromStorage($tag, $fieldValue);
+
+		$r = DB::table($fc['fieldFEIIndexName'])
+		->select($fc['fieldFEIValueFieldName'])
+		->where($fc['fieldFEIKeyFieldName'], $fieldValue)
+		->get();
+
+		Log::channel('stderr')->debug("FEIS!getRT!:", [$r]);
+
+		$results = [];
+		
+		foreach ($r as $item)
+		{
+			Log::channel('stderr')->debug("FEIS!getRT!item:", [$item]);
+			$results[] = $item->{$fc['fieldFEIValueFieldName']};
+		}
+
+		// return $results;
 
 
-        $r = $this->getFromStorage($tag, $fieldValue);
         // print_r($pieces);
 
 		// print_r($r);
 
-        $u = array_unique($r, SORT_STRING);
+        $u = array_unique($results, SORT_STRING);
 
 		// dd(json_encode($u));
 
@@ -536,7 +565,6 @@ class FieldsEncryptedIndexService
         Log::channel('stderr')->debug('FEIS!FEI_del:', [$tableName, $fieldName, $index] );
 
 		$fc = $this->FEI_config->getFieldConfig($tableName . "." . $fieldName);
-				
 		Log::channel('stderr')->debug('FEIS!FEI_del:', [$fc] );
 
 		
