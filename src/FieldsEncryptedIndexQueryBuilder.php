@@ -102,19 +102,21 @@ class FieldsEncryptedIndexQueryBuilder {
 			}
 
 	
-			Log::channel('stderr')->info($this->SHORT_NAME  . ':### JOIN ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
-			$joinClause = $this->buildJoinClause($sqlRequest); 
-			Log::channel('stderr')->info($this->SHORT_NAME  . ':### JOIN SQL-> ##', [$joinClause] );
+			// Log::channel('stderr')->info($this->SHORT_NAME  . ':### JOIN ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
+			// $joinClause = $this->buildJoinClause($sqlRequest); 
+			// Log::channel('stderr')->info($this->SHORT_NAME  . ':### JOIN SQL-> ##', [$joinClause] );
 
 
 			Log::channel('stderr')->info($this->SHORT_NAME  . ':### ORDER ####', ['@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@'] );
 			$orderClause = $this->buildOrderClause($sqlRequest); 
 			Log::channel('stderr')->info($this->SHORT_NAME  . ':### ORDER SQL-> ##', [$orderClause] );
 
-
+			
 			// LIMIT TODO TODO TODO 
 
-			$sqlStatement = $verbClause . " " . $fieldsClause['SQL'] . " " . $fromTableClause . " " . $joinClause . " " . $whereClause . " " . $orderClause;
+			$sqlStatement = $verbClause . " " . $fieldsClause['SQL'] . " " . $fromTableClause . " " . $whereClause . " " . $orderClause;
+
+			// dd($sqlStatement);
 
 			Log::channel('stderr')->info($this->SHORT_NAME  . ':FINAL STATEMENT:', [$sqlStatement ] );
 
@@ -376,23 +378,88 @@ class FieldsEncryptedIndexQueryBuilder {
 
 	}
 
+
+	// crea la FROM tenendo conto anche della JOIN!
+
 	function buildFromTableClause(array $r, $cmd) {
 
 		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildFromTableClause:', [is_array($r)] );
 
 		// se esiste tableName ritona altrimenti	
+		/*
+
+				from ldapuser 
+				JOIN migrations ON ldapuser.id = migrations.id
+				JOIN pstorici1999 ON migrations.id = pstorici1999.id
+
+				{
+					"joinTableName" : "stakeholders",
+					"joinSourceField": "docs.id",
+					"joinDestField": "stakeholders.docs_id"
+				}
+
+		*/
 		
+		$SQL = "";
 
 		if ( array_key_exists('table', $r) 	)
 		{
 
 			$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($r['table']);
 			$SQL = $cmd . $tableNameHashed;
-			return $SQL;
+		}
+
+		if ( array_key_exists('join', $r) 	)
+		{
+
+			$JOIN_CLAUSE = "";
+	
+			foreach ($r['join'] as $index => $item) 
+			{
+				// Log::channel('stderr')->info($this->SHORT_NAME  . 'buildJoinClause: joinTable:', [$item['joinTable']] );
+				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildFromTableClause: joinTableName:', [$item['joinTableName']] );
+				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildFromTableClause: joinSource:', [$item['joinSourceField']] );
+				Log::channel('stderr')->info($this->SHORT_NAME  . 'buildFromTableClause: joinDest:', [$item['joinDestField']] );
+	
+	
+				// check field's type return value only if exists
+				// $tc  = $this->getTableConfig($item['joinTable']);
+				// $tc  = $this->FEI_config->getTableConfig($item['joinTable']);
+				// $ft1 = $this->getFieldTypeDefinition($item['onJoinSource']);
+				$ft1 = $this->FEI_config->getFieldConfig($item['joinSourceField']);
+				// $ft2 = $this->getFieldTypeDefinition($item['onJoinDest']);
+				$ft2 = $this->FEI_config->getFieldConfig($item['joinDestField']);
+
+				
+				// dd($ft1);
+	
+				if (in_array($ft1['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
+				{
+					Log::channel('stderr')->error('buildFromTableClause: JOIN on encrypted not supported:', [] );
+					die();
+				}
+	
+				if (in_array($ft2['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
+				{
+					Log::channel('stderr')->error('buildJoinClause: JOIN on encrypted not supported:', [] );
+					die();
+				}
+	
+				$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($item['joinTableName']);
+				
+				// INNER JOIN ldapuser ON migrations.id = ldapuser.id
+	
+				$JOIN_CLAUSE = " JOIN " . $tableNameHashed . " ON " . $ft1['tableNameHashed']  . "." . $ft1['fieldNameHashed'] . " = " . $ft2['tableNameHashed']  . "." . $ft2['fieldNameHashed'];
+
+				$SQL = $SQL . " " . $JOIN_CLAUSE;
+	
+			}
+	
+
 
 		}
 
-
+		/*
         if($r['tables'])
         {
 			$SQL = "";
@@ -420,6 +487,9 @@ class FieldsEncryptedIndexQueryBuilder {
             }
 
         }
+		*/
+
+		// dd($SQL);
 
 		return $SQL;
 
@@ -489,11 +559,11 @@ class FieldsEncryptedIndexQueryBuilder {
 
 				if ( $SQL == "") 
 				{
-					$SQL = $fc['fieldNameHashed'] . " AS " . $ALIAS ;
+					$SQL = $fc['tableNameHashed'] . "." . $fc['fieldNameHashed'] . " AS " . $ALIAS ;
 				}
 				else 
 				{
-					$SQL = $SQL . "," . $fc['fieldNameHashed'] . " AS " . $ALIAS;
+					$SQL = $SQL . " , " . $fc['tableNameHashed'] . "." . $fc['fieldNameHashed'] . " AS " . $ALIAS;
 				}
 			
 
@@ -512,6 +582,8 @@ class FieldsEncryptedIndexQueryBuilder {
 
 	function buildJoinClause(array $r) {
 
+		die('buildJoinClause NOT used - included in buildFromClause');
+
 		Log::channel('stderr')->debug($this->SHORT_NAME  . 'buildJoinClause: TODO MULTIPLE JOIN:', [$r] );
 
 		if (!array_key_exists('join', $r)) return "";
@@ -528,27 +600,28 @@ class FieldsEncryptedIndexQueryBuilder {
 
 			foreach ($r['join'] as $index => $item) 
             {
-                Log::channel('stderr')->info($this->SHORT_NAME  . 'buildJoinClause: joinTable:', [$item['joinTable']] );
-                Log::channel('stderr')->info($this->SHORT_NAME  . 'buildJoinClause: onJoinSource:', [$item['onJoinSource']] );
-                Log::channel('stderr')->info($this->SHORT_NAME  . 'buildJoinClause: onJoinDest:', [$item['onJoinDest']] );
+                // Log::channel('stderr')->info($this->SHORT_NAME  . 'buildJoinClause: joinTable:', [$item['joinTable']] );
+                Log::channel('stderr')->info($this->SHORT_NAME  . 'buildJoinClause: onJoinSource:', [$item['joinSourceField']] );
+                Log::channel('stderr')->info($this->SHORT_NAME  . 'buildJoinClause: onJoinDest:', [$item['joinDestField']] );
 
 
 				// check field's type return value only if exists
 				// $tc  = $this->getTableConfig($item['joinTable']);
-				$tc  = $this->FEI_config->getTableConfig($item['joinTable']);
+				// $tc  = $this->FEI_config->getTableConfig($item['joinTable']);
 				// $ft1 = $this->getFieldTypeDefinition($item['onJoinSource']);
-				$ft1 = $this->FEI_config->getFieldTypeDefinition($item['onJoinSource']);
+				$ft1 = $this->FEI_config->getFieldConfig($item['joinSourceField']);
 				// $ft2 = $this->getFieldTypeDefinition($item['onJoinDest']);
-				$ft2 = $this->FEI_config->getFieldTypeDefinition($item['onJoinDest']);
+				$ft2 = $this->FEI_config->getFieldConfig($item['joinDestField']);
 
+				dd($ft1);
 
-				if (in_array($ft1, ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
+				if (in_array($ft1['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
 				{
 					Log::channel('stderr')->error('buildJoinClause: JOIN on encrypted not supported:', [] );
 					die();
 				}
 
-				if (in_array($ft2, ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
+				if (in_array($ft2['fieldType'], ["ENCRYPTED", "ENCRYPTED_INDEXED"]))
 				{
 					Log::channel('stderr')->error('buildJoinClause: JOIN on encrypted not supported:', [] );
 					die();
@@ -715,6 +788,7 @@ class FieldsEncryptedIndexQueryBuilder {
         $fc = $this->FEI_config->getFieldConfig($o['fieldName']);
 
 		$ft = $fc['fieldType'];
+		$ffull = $fc['tableNameHashed'] . "." . $fc['fieldNameHashed'];
 
 		// dd($ft);
 
@@ -722,7 +796,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
         if (in_array($ft, ["LONG"])) 
         {
-			return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
+			return  " " . $ffull . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
             // return  " " . $o['fieldName'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
         } 
 		elseif (in_array($ft, ["STRING"])) 
@@ -730,11 +804,11 @@ class FieldsEncryptedIndexQueryBuilder {
 
 			if ($o['operator'] === "=") 
 			{
-				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
+				return  " " . $ffull . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
 			}
 			elseif ($o['operator'] === "LIKE") 
 			{
-				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '%" . $o['fieldValue'] . "%' ";
+				return  " " . $ffull . " " . $o['operator'] . " '%" . $o['fieldValue'] . "%' ";
 			}
 			else 
 			{
@@ -765,7 +839,7 @@ class FieldsEncryptedIndexQueryBuilder {
 				Log::channel('stderr')->debug($this->SHORT_NAME  . ':getFieldClause:', [$value]);
 								
 
-				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $value . "' ";
+				return  " " . $ffull . " " . $o['operator'] . " '" . $value . "' ";
 			}
             
         }
@@ -780,7 +854,7 @@ class FieldsEncryptedIndexQueryBuilder {
 
 				Log::channel('stderr')->debug($this->SHORT_NAME  . ':getFieldClause:', [$value]);
 
-				return  " " . $fc['fieldNameHashed'] . " " . $o['operator'] . " '" . $value . "' ";
+				return  " " . $ffull . " " . $o['operator'] . " '" . $value . "' ";
 			}
 			elseif ($o['operator'] == "LIKE")  
 			{
@@ -798,6 +872,7 @@ class FieldsEncryptedIndexQueryBuilder {
 				$r = $this->FEI_service->FEI_get( $tname, $fname, $o['fieldValue']);
 
 				$pkId = $this->FEI_config->getTablePrimaryKey($tname);
+				$tableNameHashed = $this->FEI_config->getHashedTableNameConfig($tname);
 				
 				$idList = implode("," , $r);
 
@@ -811,7 +886,7 @@ class FieldsEncryptedIndexQueryBuilder {
 				// Log::channel('stderr')->debug($this->SHORT_NAME  . 'getFieldClause:FEI_service', [$r] );
 				
 
-				return  " ( " . $fc['tableNameHashed'] ."." . $pkId . "  IN  (" . $idList. ") ) ";
+				return  " ( " . $tableNameHashed ."." . $pkId . "  IN  (" . $idList. ") ) ";
 			} 
 			else 
 			{
@@ -822,7 +897,7 @@ class FieldsEncryptedIndexQueryBuilder {
         }
 		elseif (in_array($ft, ["PRIMARYKEY"])) 
         {
-			return  " " . $fc['fieldName'] . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
+			return  " " . $ffull . " " . $o['operator'] . " " . $o['fieldValue'] . " ";
             // return  " " . $o['fieldName'] . " " . $o['operator'] . " '" . $o['fieldValue'] . "' ";
         } 
         else

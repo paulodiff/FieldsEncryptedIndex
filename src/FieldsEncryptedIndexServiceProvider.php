@@ -39,7 +39,7 @@ class FieldsEncryptedIndexServiceProvider extends ServiceProvider
                     // FieldsEncryptedIndexCheckConfigCommand::class,
                     FieldsEncryptedIndexTestCommand::class,
                     // FieldsEncryptedIndexDbDynamicCommand::class,
-                    FieldsEncryptedIndexParseSQLCommand::class,
+                    // FieldsEncryptedIndexParseSQLCommand::class,
                     // FieldsEncryptedIndexKeyGeneratorCommand::class,
                     
                     // FieldsEncryptedIndexDbCrudCommand::class,

@@ -1350,7 +1350,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 							[
 								{
 									"fieldName" : "stakeholders.id",
-									"operator" : ">",
+									"operator" : "=",
 									"fieldValue" : "150"
 								}
 							]
@@ -1366,6 +1366,58 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 		}
 
+
+		elseif ( $action == "joinDocsWithStakeholders" ) {
+
+			Log::channel('stderr')->notice('FEITestCommand:' . $action, [] );
+
+			$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+
+			$jsonRequest = '{
+				"action" : "SELECT",
+				"table" : "docs",
+				"fields" : 
+				    [
+						{  "fieldName": "docs.id"},
+						{  "fieldName": "docs.description"},
+						{  "fieldName": "stakeholders.id" },
+						{  "fieldName": "stakeholders.name" },
+						{  "fieldName": "stakeholders.email" }
+					],
+
+				"join" : [
+						{
+							"joinTableName" : "stakeholders",
+							"joinSourceField": "docs.id",
+							"joinDestField": "stakeholders.docs_id"
+						}
+					],
+
+				"where" : 
+					[
+		
+						{
+							"operator" : "",
+							"clauses" : 
+							[
+								{
+									"fieldName" : "stakeholders.name",
+									"operator" : "LIKE",
+									"fieldValue" : "sam"
+								}
+							]
+						}
+					]
+				
+
+			}';
+			
+
+			$q = $this->FEI_engine->process($jsonRequest);
+
+			Log::channel('stderr')->notice('FINAL!:'. $action , [$q] );
+
+		}
 
 
 

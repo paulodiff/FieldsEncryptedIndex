@@ -80,14 +80,16 @@ class ParseSQLCommandTest extends TestCase
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 
-*/
+
 		
 		$cmd = 'FieldsEncryptedIndex:test selectStakeholders 1';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
+*/
 
-
-
+		$cmd = 'FieldsEncryptedIndex:test joinDocsWithStakeholders 1';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+		Artisan::call($cmd);
 
 		/* UPDATE ... DELETE ... SELECT */
 		
