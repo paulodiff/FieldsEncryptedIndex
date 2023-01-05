@@ -37,9 +37,10 @@ class ParseSQLCommandTest extends TestCase
 
 */		
 
+// DOCS
 
 /*		
-		$cmd = 'FieldsEncryptedIndex:test createTable 0';
+		$cmd = 'FieldsEncryptedIndex:test createDocs 0';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 		
@@ -50,16 +51,38 @@ class ParseSQLCommandTest extends TestCase
 		$cmd = 'FieldsEncryptedIndex:test insertDocs 100';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
-*/	
+*/
 
 /*
-		$cmd = 'FieldsEncryptedIndex:test updateDocs 1';
+		$cmd = 'FieldsEncryptedIndex:test updateDocs 100';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 */
 
+/*
+		$cmd = 'FieldsEncryptedIndex:test selectDocs 100';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+		Artisan::call($cmd);
+*/		
 
-		$cmd = 'FieldsEncryptedIndex:test selectDocs 1';
+// STAKEHOLDERS
+
+/*		
+		$cmd = 'FieldsEncryptedIndex:test createStakeholders 0';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+		Artisan::call($cmd);
+*/		
+
+
+/*
+		
+		$cmd = 'FieldsEncryptedIndex:test insertStakeholders 100';
+		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
+		Artisan::call($cmd);
+
+*/
+		
+		$cmd = 'FieldsEncryptedIndex:test selectStakeholders 1';
 		Log::channel('stderr')->info('ParseSQLCommandTest:the_db_seed_command:artisan command exec:', [$cmd] );
 		Artisan::call($cmd);
 

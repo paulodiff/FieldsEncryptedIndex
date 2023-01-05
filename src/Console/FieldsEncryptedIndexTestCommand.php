@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Schema\Blueprint;
 use Faker\Factory as Faker;
+use Faker\Provider\it_IT\Person as FakerPerson;
 
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine;
 use Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEncrypter;
@@ -31,7 +32,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 		$rows = $this->argument('rows');
 		$fieldName = $this->argument('fieldName');
 		
-		Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:test:', [$action, $rows, $fieldName] );
+		Log::channel('stderr')->notice('FEITestCommand:', [$action, $rows, $fieldName] );
 
 
 // esegue $rows inserimenti nella tabella migrations ...
@@ -78,7 +79,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 			
 
 
-				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $jsonRequest] );
+				Log::channel('stderr')->notice('FEITestCommand:' . $action, [$i, $jsonRequest] );
 				
 				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
 				$q = $this->FEI_engine->process($jsonRequest);
@@ -93,13 +94,13 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 			// UPDATE `laravel`.`migrations` SET `migration`='Tom Sam Jhon q', `batch`='80253' WHERE  `id`=10;
 
-			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $rows, [$action] );
-			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $fieldName, [$action] );
+			Log::channel('stderr')->notice('FEITestCommand:' . $rows, [$action] );
+			Log::channel('stderr')->notice('FEITestCommand:' . $fieldName, [$action] );
 
 			for($i = 0; $i<$rows; $i++)
 			{
 				Log::channel('stderr')->debug('**********************************************************************:' . $i, [$action] );
-				Log::channel('stderr')->debug('FieldsEncryptedIndexTestCommand:' . $i, [$action] );
+				Log::channel('stderr')->debug('FEITestCommand:' . $i, [$action] );
 				
 				$faker = Faker::create('SeedData');
 
@@ -155,11 +156,11 @@ class FieldsEncryptedIndexTestCommand extends Command
 							},
 							{  
 								"fieldName" : "docs.note",
-								"fieldValue" : "' . $rSurname . '"  
+								"fieldValue" : "' . $rName . '"  
 							},
 							{  
 								"fieldName" : "docs.address",
-								"fieldValue" : "' . $rSurname . '"  
+								"fieldValue" : "' . $rName . '"  
 							}
 						
 					],
@@ -182,7 +183,10 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 						}';
 
-				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $idSelected, $jsonRequest] );
+
+
+
+				Log::channel('stderr')->notice('FEITestCommand:' . $action, [$i, $idSelected, $jsonRequest] );
 				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $toSearch, $jsonRequest] );
 				
 				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
@@ -191,7 +195,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 				// Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:Conteggio n. rec:', [ count($q), count($test1) ] );
 				
 	
-				Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand[' . $i . '] ' . $action . ' :FINAL!:', [] );
+				Log::channel('stderr')->notice('FEITestCommand[' . $i . '] ' . $action . ' :FINAL!:', [] );
 				
 				// recupero seconda lista ids
 		
@@ -205,7 +209,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 		// usa la process per fare le query
 		elseif ( $action == "selectDocs" ) {
 
-			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [] );
+			Log::channel('stderr')->notice('FEITestCommand:' . $action, [] );
 
 			$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
 
@@ -241,6 +245,9 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 			}';
 			
+			
+
+
 			$q = $this->FEI_engine->process($jsonRequest);
 
 
@@ -276,7 +283,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 				$ID_ = $Ids[$idSelected-1]->docs_id;
 
-				Log::channel('stderr')->debug('FieldsEncryptedIndexTestCommand: SELECT ' , [$ID_] );
+				Log::channel('stderr')->debug('FEITestCommand: SELECT ' , [$ID_] );
 				
 				$rNumber = $faker->randomNumber(5, true);
 				$rMigrationName = $faker->name();
@@ -320,6 +327,14 @@ class FieldsEncryptedIndexTestCommand extends Command
 						
 					}';
 
+				$string = $jsonRequest;
+				$string = trim(preg_replace('/\t+/', '', $string));
+				$string = trim(preg_replace('/\s\s+/', '', $string));
+				// $string = trim(preg_replace('/\n/', '', $string));
+				// $string = trim(preg_replace('/ /', '', $string));
+
+				Log::channel('stderr')->notice('[[[[[VERIFICA 1]]]]', [$string]);
+
 				$q = $this->FEI_engine->process($jsonRequest);
 
 				$jq = json_decode($q);
@@ -327,8 +342,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 				// dd($jq[0]);
 
 				// VERIFICA 1 description == note == address
-				Log::channel('stderr')->notice('[[[[[VERIFICA 1 description == note == address]]]]', [$i] );
-
+				
 
 				if ( 
 				( $jq[0]->docs_description <> $jq[0]->docs_note ) ||
@@ -336,14 +350,21 @@ class FieldsEncryptedIndexTestCommand extends Command
 				( $jq[0]->docs_note <> $jq[0]->docs_address )
 				) 
 				{
-					die('VERIFICA 1 FALLITA!');
+					die('<<<<ERRORE >>>>> VERIFICA 1 FALLITA!');
 				}
 
+				Log::channel('stderr')->notice('[[[[[VERIFICA 1 description == note == address]]]]', [
+					$i, 
+					$jq[0]->docs_description,
+					$jq[0]->docs_note,
+					$jq[0]->docs_address]);
 
-				Log::channel('stderr')->notice('[[[[[VERIFICA 2 SELECT SU description SU NOTE SU ADDRESS stesso ID con valore intero]]]]', [$i] );
-				
+
 				$valueTofind = $jq[0]->docs_description;
 
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2 SELECT where description/note/address stesso valore ]]]]', [$valueTofind] );
+			
+	
 				$jsonRequest = '{
 					"action" : "SELECT",
 					"tables" : 
@@ -452,10 +473,19 @@ class FieldsEncryptedIndexTestCommand extends Command
 				$q_address = $this->FEI_engine->process($jsonRequest);
 
 
-				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_description, $valueTofind] );				
-				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_note, $valueTofind] );				
-				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_address, $valueTofind] );				
+				Log::channel('stderr')->notice('[[[[[VERIFICA 2]]]]]]]]]]]]]]]', [$q_description, $q_note, $q_address] );				
 				
+
+				if ( 
+					( $q_description <> $q_note ) ||
+					( $q_description <> $q_address ) ||
+					( $q_note <> $q_address )
+					) 
+					{
+						die('<<<<ERRORE >>>>> VERIFICA  2 FALLITA!');
+					}
+	
+
 
 				$toSearch = '';
 
@@ -545,8 +575,16 @@ class FieldsEncryptedIndexTestCommand extends Command
 							
 					$q_like_address = $this->FEI_engine->process($jsonRequest);
 
-					Log::channel('stderr')->notice('[[[[[VERIFICA 3]]]]]]]]]]]]]]]', [$q_like_description, $toSearch] );				
-					Log::channel('stderr')->notice('[[[[[VERIFICA 3]]]]]]]]]]]]]]]', [$q_like_address, $toSearch] );	
+					Log::channel('stderr')->notice('[[[[[VERIFICA 3]]]]]]]]]]]]]]]', [$q_like_description, $q_like_address] );				
+					// Log::channel('stderr')->notice('[[[[[VERIFICA 3]]]]]]]]]]]]]]]', [$q_like_address, $toSearch] );
+					
+					if ( 
+						( $q_like_description <> $q_like_address )
+						) 
+						{
+							die('<<<<ERRORE >>>>> VERIFICA  3 FALLITA!');
+						}
+
 
 			} 
 
@@ -1106,7 +1144,7 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 		}
 
-		elseif ( $action == "createTable" ) {
+		elseif ( $action == "createDocs" ) {
 
 			// create JSON request
 			$faker = Faker::create('SeedData');
@@ -1156,6 +1194,179 @@ class FieldsEncryptedIndexTestCommand extends Command
 
 
 		}
+
+		elseif ( $action == "createStakeholders" ) {
+
+			// create JSON request
+			$faker = Faker::create('SeedData');
+			$rNumber = $faker->randomNumber(5, true);
+			$rMigrationName = $faker->name();
+			$rSentence = $faker->sentence();
+			// $rSentence = 'A eveniet suscipit molestiae minus sit tenetur.';
+			$rName = $faker->words(3, true);
+			$rSurname = $faker->words(3, true);
+
+			// primaryKey is always id
+
+			$jsonRequest = '{
+				"action"    : "CREATETABLE",
+				"tableName" : "stakeholders",
+				"primaryKey" : "id",
+				"fields" : [
+						{  
+							"fieldName" : "name",
+							"fieldType" : "ENCRYPTED_INDEXED"
+						},
+						{
+							"fieldName" : "docs_id",
+							"fieldType" : "LONG"
+						},
+						{
+							"fieldName" : "amount",
+							"fieldType" : "ENCRYPTED"
+						},
+						{
+							"fieldName" : "fiscalCode",
+							"fieldType" : "ENCRYPTED_INDEXED"
+						},
+						{
+							"fieldName" : "email",
+							"fieldType" : "ENCRYPTED_INDEXED"
+						}
+				]
+
+			}';
+			
+
+			$i = 9999;
+			Log::channel('stderr')->notice('FieldsEncryptedIndexTestCommand:' . $action, [$i, $jsonRequest] );
+			
+			$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+			$q = $this->FEI_engine->process($jsonRequest);
+			Log::channel('stderr')->info('FINAL!:'. $action , [$q] );
+
+
+
+		}
+
+		elseif ($action == "insertStakeholders") 
+		{
+
+			$faker = Faker::create('it_IT');
+			$faker->seed(1234);
+
+			for($i = 0; $i<$rows; $i++)
+			{
+
+				// create JSON request
+				$rNumber = $faker->randomNumber(5, true);
+				$rMigrationName = $faker->name();
+				$rSentence = $faker->sentence();
+				$rDocsid = $faker->numberBetween(1, 99);
+				// $rSentence = 'A eveniet suscipit molestiae minus sit tenetur.';
+				$rName = $faker->words(3, true);
+				$rSurname = $faker->words(3, true);
+				$email = $faker->email();
+
+				// $fakerP = FakerPerson::create('SeedData');
+				$fiscalCode = $faker->taxId();
+				
+
+	
+
+				$jsonRequest = '{
+					"action"    : "INSERT",
+					"table" : "stakeholders",
+					"fields" : [
+							{  
+								"fieldName": "stakeholders.name",   
+								"fieldValue" : "' . $rName . '"
+							},
+							{  
+								"fieldName": "stakeholders.docs_id",   
+								"fieldValue" : ' . $rDocsid . '
+							},
+							{  
+								"fieldName": "stakeholders.amount",   
+								"fieldValue" : "' . $rNumber . '"
+							},
+							{  
+								"fieldName": "stakeholders.fiscalCode",   
+								"fieldValue" : "' . $fiscalCode . '"
+							},
+							{  
+								"fieldName": "stakeholders.email",   
+								"fieldValue" : "' . $email . '"
+							}
+
+					]          
+				}';
+
+			
+
+
+				Log::channel('stderr')->notice('FEITestCommand:' . $action, [$i, $jsonRequest] );
+				
+				$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+				$q = $this->FEI_engine->process($jsonRequest);
+				Log::channel('stderr')->info('FINAL!:'. $action , [$q] );
+
+			}
+
+		} 
+
+
+		elseif ( $action == "selectStakeholders" ) {
+
+			Log::channel('stderr')->notice('FEITestCommand:' . $action, [] );
+
+			$this->FEI_engine = new \Paulodiff\FieldsEncryptedIndex\FieldsEncryptedIndexEngine();
+
+			$jsonRequest = '{
+				"action" : "SELECT",
+				"tables" : 
+				    [
+						{
+							"tableName"  : "stakeholders",
+							"tableAlias" : "stakeholders"
+						}
+					],
+				"fields" : 
+				    [
+						{  "fieldName": "stakeholders.id"},
+						{  "fieldName": "stakeholders.name" },
+						{  "fieldName": "stakeholders.docs_id" },
+						{  "fieldName": "stakeholders.amount" },
+						{  "fieldName": "stakeholders.fiscalCode" },
+						{  "fieldName": "stakeholders.email" }
+					],
+				
+				"where" : 
+					[
+		
+						{
+							"operator" : "",
+							"clauses" : 
+							[
+								{
+									"fieldName" : "stakeholders.id",
+									"operator" : ">",
+									"fieldValue" : "150"
+								}
+							]
+						}
+					]
+
+			}';
+			
+
+			$q = $this->FEI_engine->process($jsonRequest);
+
+			Log::channel('stderr')->notice('FINAL!:'. $action , [$q] );
+
+		}
+
+
 
 
 		// esegue dei test sulle librerie di cifratura

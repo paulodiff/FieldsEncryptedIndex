@@ -448,11 +448,13 @@ class FieldsEncryptedIndexService
 		Log::channel('stderr')->debug('FEIS!FEI_set:', [$tableName, $fieldName, $fieldValue, $value] );
 
 		$fc = $this->FEI_config->getFieldConfig($tableName . "." . $fieldName);
-		$ft = $fc['fieldType'];
+		// $ft = $fc['fieldType'];
+		$fei_nonce = $fc['fieldFEINonce'];
 		
 		// $fei_index_name = $fc['fieldFEIIndexName'];
 		// $fei_key_name = $fc['fieldFEIKeyFieldName'];
 		// $fei_value_name = $fc['fieldFEIValueFieldName'];
+		// $fei_nonce =	$fc['fieldFEINonce'];
 
 		Log::channel('stderr')->debug('FEIS!FEI_set:', [$fc] );
 		
@@ -470,11 +472,13 @@ class FieldsEncryptedIndexService
 		foreach( $keyList as $tokenValue )
 		{
 
-			// TODO HASH VALUE!!!
+			// ### TODO HASH VALUE!!!
+
+			$tokenValueHashed = $this->FEI_encrypter->short_hash_sodium($tokenValue, $fei_nonce);
 
 			$dataList[] = [
 				// 'rt_tag' => $tag,
-				$fc['fieldFEIKeyFieldName'] => $tokenValue,
+				$fc['fieldFEIKeyFieldName'] => $tokenValueHashed,
 				$fc['fieldFEIValueFieldName'] => $value,
 			];
 
@@ -509,8 +513,9 @@ class FieldsEncryptedIndexService
 
 
 		$fc = $this->FEI_config->getFieldConfig($tableName . "." . $fieldName);
-		Log::channel('stderr')->debug('FEIS!FEI_get:', [$fc] );
+		$fei_nonce = $fc['fieldFEINonce'];
 
+		Log::channel('stderr')->debug('FEIS!FEI_get:', [$fc] );
 
 		// $s2 = str_replace("%", "", $s);
         // Log::channel('stderr')->debug('FEIS!getRT*!:', [$tag, $s, $s2] );
@@ -523,12 +528,13 @@ class FieldsEncryptedIndexService
 		// $fei_value_name = $fc['fieldFEIValueFieldName'];
 
 	
+		$fieldValueHashed = $this->FEI_encrypter->short_hash_sodium($fieldValue, $fei_nonce);
 
         // $r = $this->getFromStorage($tag, $fieldValue);
 
 		$r = DB::table($fc['fieldFEIIndexName'])
 		->select($fc['fieldFEIValueFieldName'])
-		->where($fc['fieldFEIKeyFieldName'], $fieldValue)
+		->where($fc['fieldFEIKeyFieldName'], $fieldValueHashed)
 		->get();
 
 		Log::channel('stderr')->debug("FEIS!getRT!:", [$r]);
@@ -586,6 +592,7 @@ class FieldsEncryptedIndexService
 	// DROP DELL'INDICE
 	function FEI_drop($tableName, $fieldName)
 	{
+		die('DROP NOT USED');
 		Log::channel('stderr')->debug('FEIS!FEI_drop:', [$tableName, $fieldName] );
 		// TODO function makeTag TAG!
 		$tag = $tableName . ":" . $fieldName;

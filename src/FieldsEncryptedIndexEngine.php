@@ -59,16 +59,16 @@ class FieldsEncryptedIndexEngine {
 	{
 
 		Log::channel('stderr')->debug('FieldsEncryptedIndexEngine:process', [] );   
-
 		$aR  = $this->FEI_config->returnArrayFromJson($q);
 
-		Log::channel('stderr')->info('FieldsEncryptedIndexEngine:process', [$aR] );
+		Log::channel('stderr')->debug('FieldsEncryptedIndexEngine:process', [$aR] );
 		
 		$q = $this->FEI_sql_query_builder->buildQuery($aR);
-		Log::channel('stderr')->notice('process:parseSQL:FINAL!:', [$q] );
+
+		Log::channel('stderr')->debug('FieldsEncryptedIndexEngine:process:', [$q] );
 		
 		$r = $this->FEI_sql_query_runner->runQuery($q);
-		Log::channel('stderr')->notice('process:runSQL:FINAL!:', [$r] );
+		Log::channel('stderr')->debug('FieldsEncryptedIndexEngine:process:', [$r] );
 
 		// "SELECT" recuperare i dati e decodifica ... order by ecc.
 
